@@ -1,0 +1,51 @@
+# ── Secrets & local config ─────────────────────────────
+.env
+*.pem
+*.key
+
+# ── Version control ────────────────────────────────────
+.git/
+.gitignore
+.github/
+
+# ── Python ─────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+
+# ── Flutter/Dart source (build/web is included) ────────
+frontend/lib/
+frontend/test/
+frontend/pubspec.*
+frontend/analysis_options.yaml
+frontend/.dart_tool/
+frontend/.flutter-plugins*
+frontend/.pub-cache/
+frontend/.pub/
+frontend/.idea/
+frontend/web/
+
+# ── Docs, scripts, IDE ─────────────────────────────────
+docs/
+scripts/
+.idea/
+.vscode/
+*.iml
+*.md
+
+# ── Other services (not needed in build context) ───────
+infra/mobile-core/
+infra/jarvis-core/
+infra/nginx/
+
+# ── OS artifacts ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+*.bak
+*.swp

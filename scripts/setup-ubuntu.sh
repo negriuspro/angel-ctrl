@@ -74,8 +74,10 @@ else
 fi
 
 # ── 4. Directorio .claude ─────────────────────────────────────────
-mkdir -p "$HOME/.claude/projects"
-info "Directorio $HOME/.claude listo."
+CLAUDE_DATA_PATH_VAL=$(grep CLAUDE_DATA_PATH "$DEPLOY_DIR/.env" 2>/dev/null | cut -d= -f2)
+CLAUDE_DATA_PATH_VAL="${CLAUDE_DATA_PATH_VAL:-$HOME/.claude}"
+mkdir -p "$CLAUDE_DATA_PATH_VAL/projects"
+info "Directorio $CLAUDE_DATA_PATH_VAL listo (requerido por bind mount de Docker)."
 
 # ── 5. GitHub Actions Runner ──────────────────────────────────────
 info "Descargando GitHub Actions runner..."

@@ -13,7 +13,7 @@ FRONTEND_DIR="$ROOT_DIR/frontend"
 echo "[build] Compilando Flutter web..."
 cd "$FRONTEND_DIR"
 flutter pub get
-flutter build web --release --web-renderer canvaskit
+flutter build web --release
 
 echo "[build] Build completado en frontend/build/web/"
 echo "[build] Ahora puedes: git add frontend/build/web && git commit && git push"

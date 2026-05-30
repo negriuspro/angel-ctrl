@@ -1,9 +1,22 @@
+# ── Stage 1: instalar dependencias ────────────────────────────────────────
+FROM python:3.12-slim AS builder
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ── Stage 2: imagen final mínima ──────────────────────────────────────────
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PYTHONUNBUFFERED=1
 
 # curl para healthcheck
 RUN apt-get update \
@@ -15,11 +28,10 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 
-# Dependencies layer (se cachea si requirements.txt no cambia)
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copiar dependencias compiladas del builder
+COPY --from=builder /install /usr/local
 
-# App code
+# Código de la app
 COPY backend/app ./app
 
 RUN chown -R appuser:appuser /app
