@@ -1,0 +1,172 @@
+name: antigravity
+
+services:
+  # ========== interfazdocker (Control Center) — split ==========
+  antigravity-backend:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: infra/antigravity-backend/Dockerfile
+    mem_limit: 384m
+    cpus: 0.75
+    expose:
+      - "8080"
+    environment:
+      APP_ENV: production
+      DOCKER_HOST: unix:///var/run/docker.sock
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://100.80.145.21:3000,http://100.80.145.21:3001,http://100.80.145.21:3002
+      CLAUDE_CONFIG_DIR: /claude-data
+      API_KEY: ak_8f3a9c2e7b1d4f6a0c8e2b4d6f8a0c2e
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_default_pass}@antigravity-redis:6379/0
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      SAMBANOVA_API_KEY: ${SAMBANOVA_API_KEY}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME:-~}/.claude:/claude-data:ro
+    depends_on:
+      - antigravity-redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - antigravity
+
+  antigravity-nginx:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: infra/antigravity-nginx/Dockerfile
+    mem_limit: 32m
+    cpus: 0.15
+    ports:
+      - "3000:80"
+    depends_on:
+      - antigravity-backend
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/legacy.html"]
+      interval: 30s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+    networks:
+      - antigravity
+
+  antigravity-redis:
+    restart: unless-stopped
+    image: redis:7-alpine
+    mem_limit: 64m
+    cpus: 0.25
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redis_default_pass}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_default_pass}", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - antigravity
+
+
+  # ========== AntigravityMobile — unified ==========
+  mobile-core:
+    restart: unless-stopped
+    build:
+      context: ../AntigravityMobile
+      dockerfile: Dockerfile.core
+    mem_limit: 512m
+    cpus: 1.0
+    ports:
+      - "3001:80"
+    env_file:
+      - ../AntigravityMobile/.env
+    environment:
+      HUB_HOST: 0.0.0.0
+      HUB_PORT: 8000
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_default_pass}@mobile-redis:6379/0
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mobile-redis
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - mobile
+
+  mobile-redis:
+    restart: unless-stopped
+    image: redis:7-alpine
+    mem_limit: 128m
+    cpus: 0.25
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redis_default_pass}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_default_pass}", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - mobile_redis_data:/data
+    networks:
+      - mobile
+
+  # ========== Jarvis (Voice AI) — unified ==========
+  jarvis-core:
+    restart: unless-stopped
+    build:
+      context: ../proyectos con ia/jarvis
+      dockerfile: Dockerfile.core
+    mem_limit: 512m
+    cpus: 1.0
+    ports:
+      - "3002:80"
+    env_file:
+      - ../proyectos con ia/jarvis/.env
+    environment:
+      APP_ENV: production
+      DOCKER_HOST: unix:///var/run/docker.sock
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_default_pass}@jarvis-redis:6379/0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - jarvis-redis
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - jarvis
+
+  jarvis-redis:
+    restart: unless-stopped
+    image: redis:7-alpine
+    mem_limit: 128m
+    cpus: 0.25
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-redis_default_pass}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_default_pass}", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - jarvis_redis_data:/data
+    networks:
+      - jarvis
+
+volumes:
+  redis_data:
+  mobile_redis_data:
+  jarvis_redis_data:
+
+networks:
+  antigravity:
+    driver: bridge
+  mobile:
+    driver: bridge
+  jarvis:
+    driver: bridge

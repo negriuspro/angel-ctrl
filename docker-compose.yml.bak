@@ -1,0 +1,79 @@
+services:
+  backend:
+    restart: unless-stopped
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: production
+      BACKEND_HOST: 0.0.0.0
+      BACKEND_PORT: 8080
+      DOCKER_HOST: unix:///var/run/docker.sock
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - antigravity
+
+  frontend:
+    restart: unless-stopped
+    build:
+      context: ./frontend
+      target: runtime
+    depends_on:
+      - backend
+    networks:
+      - antigravity
+
+  nginx:
+    restart: unless-stopped
+    build:
+      context: ./infra/nginx
+    ports:
+      - "3000:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - antigravity
+
+  redis:
+    restart: unless-stopped
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - antigravity
+
+  future-agents:
+    image: alpine:3.20
+    command: ["sh", "-c", "sleep infinity"]
+    profiles: ["future"]
+    networks:
+      - antigravity
+
+  future-monitoring:
+    image: alpine:3.20
+    command: ["sh", "-c", "sleep infinity"]
+    profiles: ["future"]
+    networks:
+      - antigravity
+
+volumes:
+  redis_data:
+
+networks:
+  antigravity:
+    driver: bridge

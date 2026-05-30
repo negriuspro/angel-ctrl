@@ -1,0 +1,23 @@
+services:
+  backend:
+    environment:
+      APP_ENV: development
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+
+  frontend:
+    build:
+      target: builder
+    command: ["sh", "-c", "flutter pub get && flutter run -d web-server --web-hostname 0.0.0.0 --web-port 3000"]
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: ./infra/nginx
+    volumes:
+      - ./infra/nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "3000:80"

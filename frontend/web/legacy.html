@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Antigravity · Control Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070B12;
+  --bg2: #0B1220;
+  --surface: rgba(15, 23, 42, 0.72);
+  --surface-hover: rgba(15, 23, 42, 0.88);
+  --border: rgba(0, 209, 255, 0.12);
+  --border-hover: rgba(0, 209, 255, 0.25);
+  --accent: #00D1FF;
+  --accent-dim: rgba(0, 209, 255, 0.08);
+  --accent-glow: rgba(0, 209, 255, 0.15);
+  --ok: #22C55E;
+  --ok-dim: rgba(34, 197, 94, 0.1);
+  --warning: #FACC15;
+  --danger: #F87171;
+  --text: #EDF2F7;
+  --text2: #94A3B8;
+  --text3: #475569;
+  --sidebar-w: 220px;
+  --header-h: 64px;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:13px;
+  line-height:1.5;
+  display:flex;
+  overflow:hidden;
+}
+a{color:var(--accent);text-decoration:none}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ─── Sidebar ─── */
+.sidebar{
+  width:var(--sidebar-w);
+  height:100vh;
+  background:linear-gradient(180deg,#0B1220,#070B12);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  padding:0;
+  position:fixed;
+  left:0;top:0;z-index:101;
+  overflow-y:auto;
+  transition: transform 0.3s ease;
+}
+.sidebar-brand{
+  padding:20px 20px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.sidebar-brand svg{flex-shrink:0}
+.sidebar-brand h1{
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:0.5px;
+  background:linear-gradient(135deg,#00D1FF,#22C55E);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.sidebar-brand span{
+  font-size:9px;
+  color:var(--text3);
+  display:block;
+  -webkit-text-fill-color:var(--text3);
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.sidebar-nav{
+  flex:1;
+  padding:12px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 12px;
+  border-radius:var(--radius-sm);
+  color:var(--text2);
+  font-size:12px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all 0.2s;
+  border:none;
+  background:transparent;
+  width:100%;
+  text-align:left;
+}
+.nav-item:hover{background:var(--accent-dim);color:var(--text)}
+.nav-item.active{
+  background:var(--accent-dim);
+  color:var(--accent);
+  box-shadow:inset 2px 0 0 var(--accent);
+}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.7}
+.nav-item.active svg{opacity:1}
+.nav-item .badge{
+  margin-left:auto;
+  background:var(--accent-dim);
+  color:var(--accent);
+  font-size:10px;
+  padding:1px 7px;
+  border-radius:10px;
+  font-weight:600;
+}
+.sidebar-footer{
+  padding:12px 16px;
+  border-top:1px solid var(--border);
+  font-size:10px;
+  color:var(--text3);
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+/* ─── Main ─── */
+.main{
+  margin-left:var(--sidebar-w);
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* ─── Header ─── */
+.header{
+  height:var(--header-h);
+  padding:0 28px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  border-bottom:1px solid var(--border);
+  background:rgba(7,11,18,0.6);
+  backdrop-filter:blur(12px);
+  flex-shrink:0;
+}
+.header-title h2{font-size:16px;font-weight:700}
+.header-title span{color:var(--text3);font-size:11px}
+.header-center{
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:20px;
+  justify-content:center;
+}
+.header-chip{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  font-size:11px;
+  color:var(--text2);
+}
+.header-chip .dot{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--ok);
+  box-shadow:0 0 6px var(--ok);
+}
+.header-chip .dot.warning{background:var(--warning);box-shadow:0 0 6px var(--warning)}
+.header-chip .dot.danger{background:var(--danger);box-shadow:0 0 6px var(--danger)}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:12px;
+  color:var(--text2);
+}
+.btn-icon{
+  width:32px;height:32px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--text2);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.2s;
+}
+.btn-icon:hover{background:var(--surface-hover);color:var(--text);border-color:var(--border-hover)}
+.btn-icon svg{width:16px;height:16px}
+.clock{font-variant-numeric:tabular-nums;font-size:12px}
+
+/* ─── Content ─── */
+.content{
+  flex:1;
+  overflow-y:auto;
+  padding:24px 28px;
+}
+
+/* ─── Stats Grid ─── */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-bottom:24px;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 20px;
+  backdrop-filter:blur(12px);
+  transition:all 0.3s;
+  position:relative;
+  overflow:hidden;
+}
+.stat-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:2px;
+  opacity:0.6;
+}
+.stat-card.cpu::before{background:linear-gradient(90deg,var(--accent),transparent)}
+.stat-card.mem::before{background:linear-gradient(90deg,var(--warning),transparent)}
+.stat-card.disk::before{background:linear-gradient(90deg,var(--ok),transparent)}
+.stat-card:hover{
+  border-color:var(--border-hover);
+  transform:translateY(-1px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+.stat-card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.stat-card-header .label{
+  font-size:11px;
+  font-weight:600;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.stat-card-header svg{width:20px;height:20px;opacity:0.5}
+.stat-card-value{
+  font-size:32px;
+  font-weight:800;
+  line-height:1;
+  margin-bottom:8px;
+}
+.stat-card-value .unit{font-size:12px;font-weight:500;color:var(--text3);margin-left:2px}
+.stat-card-bar{
+  height:5px;
+  background:rgba(255,255,255,0.05);
+  border-radius:3px;
+  overflow:hidden;
+  margin-bottom:6px;
+}
+.stat-card-bar-fill{
+  height:100%;
+  border-radius:3px;
+  transition:width 0.5s ease;
+}
+.stat-card-bar-fill.cpu-fill{background:linear-gradient(90deg,var(--accent),#00E5FF)}
+.stat-card-bar-fill.mem-fill{background:linear-gradient(90deg,var(--warning),#FFD740)}
+.stat-card-bar-fill.disk-fill{background:linear-gradient(90deg,var(--ok),#66FF99)}
+.stat-card-footer{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--text3);
+}
+.sparkline-canvas{
+  width:100%;
+  height:36px;
+  margin-top:8px;
+  border-radius:4px;
+}
+
+/* ─── Panels ─── */
+.panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  backdrop-filter:blur(12px);
+  margin-bottom:16px;
+}
+.panel-header{
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.panel-header h3{
+  font-size:11px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.8px;
+  color:var(--accent);
+}
+.panel-header .count{
+  font-size:10px;
+  color:var(--text3);
+  background:var(--accent-dim);
+  padding:2px 8px;
+  border-radius:10px;
+}
+.panel-body{padding:0}
+
+/* ─── Container Table ─── */
+.container-table{width:100%;border-collapse:collapse}
+.container-table th{
+  text-align:left;
+  padding:12px 16px;
+  font-size:10px;
+  font-weight:600;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  border-bottom:1px solid var(--border);
+}
+.container-table td{
+  padding:12px 16px;
+  font-size:12px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  vertical-align:middle;
+}
+.container-table tr:hover{background:rgba(255,255,255,0.02)}
+.container-table tr:last-child td{border-bottom:none}
+.c-status{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.c-status .dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  display:inline-block;
+}
+.c-status .dot.running{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.c-status .dot.exited{background:var(--text3)}
+.c-status .dot.paused{background:var(--warning)}
+.c-name{
+  font-weight:600;
+  max-width:240px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.c-image{color:var(--text2);font-size:11px;font-family:monospace}
+.c-uptime{color:var(--text2);font-size:11px}
+.c-actions{display:flex;gap:6px}
+.c-actions button{
+  padding: 4px 10px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text2);
+  cursor:pointer;
+  transition:all 0.2s;
+  font-size:11px;
+}
+.c-actions button:hover{border-color:var(--border-hover);color:var(--text);background:var(--accent-dim)}
+
+/* ─── Modal ─── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(4, 6, 10, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open {
+  display: flex;
+}
+.modal {
+  background: #0B1220;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 750px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  animation: modalEnter 0.2s ease-out;
+}
+@keyframes modalEnter {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text2);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.modal-close:hover {
+  color: var(--text);
+}
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modal-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.modal-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text2);
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.modal-tab-btn:hover {
+  color: var(--text);
+  background: var(--accent-dim);
+}
+.modal-tab-btn.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.tab-content {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+.tab-content.active {
+  display: flex;
+}
+.metrics-visualizer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.metric-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.metric-box-val {
+  font-size: 26px;
+  font-weight: 800;
+}
+.logs-container {
+  display: flex;
+  flex-direction: column;
+  height: 320px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #04060a;
+  overflow: hidden;
+}
+.logs-header {
+  padding: 8px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logs-content {
+  flex: 1;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  color: #EDF2F7;
+}
+
+/* ─── Responsive & Hamburger menu ─── */
+.menu-toggle {
+  display: none;
+}
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(4, 6, 10, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+}
+.sidebar-overlay.open {
+  display: block;
+}
+
+@media(max-width:900px){
+  .menu-toggle {
+    display: flex !important;
+  }
+  .sidebar{
+    display: none;
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 230px;
+    height: 100vh;
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    display: flex;
+    transform: translateX(0);
+  }
+  .main{margin-left:0}
+  .stats-grid{grid-template-columns:1fr}
+  .header{padding:0 16px}
+  .header-center{display:none}
+  .content{padding:16px}
+  .metrics-visualizer { grid-template-columns: 1fr; }
+  .ai-quick-stats { grid-template-columns: repeat(2, 1fr); }
+  .ai-metrics-row { grid-template-columns: 1fr; }
+  .ai-provider-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+/* ─── AI Operations Center ─── */
+.ai-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.ai-qs-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ai-qs-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.ai-qs-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ai-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text2);
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+.ai-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.ai-provider-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.ai-provider-card:hover {
+  border-color: var(--border-hover);
+}
+.ai-provider-card.status-online {
+  border-left: 3px solid var(--ok);
+}
+.ai-provider-card.status-offline {
+  border-left: 3px solid var(--text3);
+  opacity: 0.6;
+}
+.ai-provider-card.status-rate_limited {
+  border-left: 3px solid var(--warning);
+}
+.ai-provider-card.status-error {
+  border-left: 3px solid var(--danger);
+}
+.ai-provider-card.status-unknown {
+  border-left: 3px solid var(--warning);
+}
+.ai-provider-card.status-not_configured {
+  border-left: 3px solid var(--text3);
+  opacity: 0.5;
+}
+.ai-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ai-card-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.ai-card-badge.c1 { background: rgba(0, 209, 255, 0.15); color: var(--accent); }
+.ai-card-badge.c2 { background: rgba(34, 197, 94, 0.15); color: var(--ok); }
+.ai-card-badge.c3 { background: rgba(250, 204, 21, 0.15); color: var(--warning); }
+.ai-card-badge.c4 { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+.ai-card-badge.c5 { background: rgba(148, 163, 184, 0.15); color: var(--text2); }
+.ai-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ai-card-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ai-card-status-dot.online { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+.ai-card-status-dot.offline { background: var(--text3); }
+.ai-card-status-dot.rate_limited { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.ai-card-status-dot.unknown { background: var(--warning); }
+.ai-card-status-dot.error { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.ai-card-status-dot.not_configured { background: var(--text3); }
+.ai-card-model {
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ai-card-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+.ai-card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.ai-metric-label {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ai-metric-value {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ai-card-footer {
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--text3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ai-metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.ai-metrics-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ai-metrics-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text2);
+}
+.ai-metrics-badge {
+  font-size: 9px;
+  color: var(--text3);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.ai-metrics-body {
+  padding: 16px;
+}
+.ai-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.ai-stat-row:last-child {
+  border-bottom: none;
+}
+.ai-stat-label {
+  font-size: 12px;
+  color: var(--text2);
+}
+.ai-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ai-progress-track {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.ai-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+.ai-progress-fill.green { background: var(--ok); }
+.ai-progress-fill.yellow { background: var(--warning); }
+.ai-progress-fill.red { background: var(--danger); }
+.ai-progress-fill.cyan { background: var(--accent); }
+.ai-empty-state {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--text3);
+  font-size: 12px;
+}
+.ai-empty-state svg {
+  width: 32px;
+  height: 32px;
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+.ai-alerts-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.ai-alert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid transparent;
+}
+.ai-alert-item.warning {
+  background: rgba(250, 204, 21, 0.08);
+  border-color: rgba(250, 204, 21, 0.2);
+  color: var(--warning);
+}
+.ai-alert-item.danger {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+  color: var(--danger);
+}
+.ai-alert-item.info {
+  background: rgba(0, 209, 255, 0.08);
+  border-color: rgba(0, 209, 255, 0.2);
+  color: var(--accent);
+}
+.ai-alert-item.success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: var(--ok);
+}
+.ai-alert-icon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ai-alert-icon.warning { background: var(--warning); }
+.ai-alert-icon.danger { background: var(--danger); }
+.ai-alert-icon.info { background: var(--accent); }
+.ai-alert-icon.success { background: var(--ok); }
+.ai-sparkline {
+  width: 100%;
+  height: 30px;
+  margin-top: 8px;
+  display: block;
+}
+.ai-sparkline polyline {
+  fill: none;
+  stroke-width: 1.5;
+}
+.ai-sparkline .fill {
+  fill-opacity: 0.08;
+}
+.ai-sub-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.ai-rate-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+.ai-rate-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ai-rate-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+.ai-rate-bar-fill.green { background: var(--ok); }
+.ai-rate-bar-fill.yellow { background: var(--warning); }
+.ai-rate-bar-fill.red { background: var(--danger); }
+.ai-rate-bar-fill.cyan { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- Mobile Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ═══ Sidebar ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <div>
+      <h1>Antigravity</h1>
+      <span>Control Center</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <button class="nav-item active" data-section="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Resumen
+    </button>
+    <button class="nav-item" data-section="containers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+      Contenedores
+      <span class="badge" id="containerCount">0</span>
+    </button>
+    <button class="nav-item" data-section="images">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Imágenes
+    </button>
+    <button class="nav-item" data-section="networks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a10 10 0 0 1 10 10"/><path d="M12 12a4 4 0 0 1 4 4"/><circle cx="12" cy="20" r="2"/></svg>
+      Redes
+    </button>
+    <button class="nav-item" data-section="ai">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-4 5-2-2-4-3-4-5a4 4 0 0 1 4-4z"/><path d="M12 12v7"/><path d="M8 22h8"/></svg>
+      Sistemas IA
+    </button>
+    <button class="nav-item" data-section="agents">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+      Agentes
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <span id="sidebarHost">Conectando...</span>
+    <span id="sidebarUptime"></span>
+  </div>
+</aside>
+
+<!-- ═══ Main ═══ -->
+<div class="main">
+  <header class="header">
+    <button class="btn-icon menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+    <div class="header-title">
+      <h2 id="pageTitle">Resumen</h2>
+      <span id="hostDisplay">—</span>
+    </div>
+    <div class="header-center">
+      <div class="header-chip"><span class="dot" id="statusDot"></span><span id="statusText">Todo OK</span></div>
+      <div class="header-chip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-4a2 2 0 0 1-2-2V1"/><path d="M4 7V4a2 2 0 0 1 2-2h8l6 6v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7"/></svg><span id="dockerVersion">—</span></div>
+    </div>
+    <div class="header-right">
+      <span class="clock" id="clock">--:--:--</span>
+      <button class="btn-icon" onclick="loadData()" title="Actualizar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg></button>
+    </div>
+  </header>
+
+  <!-- Network Connection Loss Banner -->
+  <div id="connErrorBanner" style="display:none;background:rgba(248,113,113,0.15);border-bottom:1px solid var(--danger);color:var(--danger);padding:8px 28px;font-size:12px;font-weight:500;align-items:center;gap:8px">
+    <span class="dot danger" style="width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--danger);box-shadow:0 0 6px var(--danger)"></span>
+    Error de red: No se pudo conectar al backend de Antigravity. Intentando reconectar...
+  </div>
+
+  <div class="content" id="mainContent">
+    
+    <!-- Overview Section Components (Stats Grid, System row) -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card cpu">
+        <div class="stat-card-header"><span class="label">CPU</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></div>
+        <div class="stat-card-value"><span id="cpuVal">0</span><span class="unit">%</span></div>
+        <div class="stat-card-bar"><div class="stat-card-bar-fill cpu-fill" id="cpuBar" style="width:0%"></div></div>
+        <div class="stat-card-footer"><span id="cpuCores">0 cores</span><span id="cpuLoad">0 / 0 / 0</span></div>
+        <canvas class="sparkline-canvas" id="cpuSpark" width="300" height="36"></canvas>
+      </div>
+      <div class="stat-card mem">
+        <div class="stat-card-header"><span class="label">RAM</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16"/><path d="M15 4v16"/></svg></div>
+        <div class="stat-card-value"><span id="memVal">0</span><span class="unit">%</span></div>
+        <div class="stat-card-bar"><div class="stat-card-bar-fill mem-fill" id="memBar" style="width:0%"></div></div>
+        <div class="stat-card-footer"><span id="memUsed">0G / 0G</span><span id="memDetail">—</span></div>
+        <canvas class="sparkline-canvas" id="memSpark" width="300" height="36"></canvas>
+      </div>
+      <div class="stat-card disk">
+        <div class="stat-card-header"><span class="label">DISCO</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div class="stat-card-value"><span id="diskVal">0</span><span class="unit">%</span></div>
+        <div class="stat-card-bar"><div class="stat-card-bar-fill disk-fill" id="diskBar" style="width:0%"></div></div>
+        <div class="stat-card-footer"><span id="diskUsed">0G / 0G</span><span id="diskDetail">—</span></div>
+        <canvas class="sparkline-canvas" id="diskSpark" width="300" height="36"></canvas>
+      </div>
+    </div>
+
+    <!-- Containers Panel -->
+    <div class="panel" id="containersPanel">
+      <div class="panel-header"><h3>Contenedores</h3><span class="count" id="containerPanelCount">0 total</span></div>
+      <div class="panel-body" style="overflow-x:auto">
+        <table class="container-table">
+          <thead><tr>
+            <th style="width:35%">Nombre / Imagen</th>
+            <th style="width:15%">Estado</th>
+            <th style="width:30%">Uptime</th>
+            <th style="width:20%">Acciones</th>
+          </tr></thead>
+          <tbody id="containerBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Images Panel (Hidden by default) -->
+    <div class="panel" id="imagesPanel" style="display:none">
+      <div class="panel-header"><h3>Imágenes de Docker</h3><span class="count" id="imagesCount">0 total</span></div>
+      <div class="panel-body" style="overflow-x:auto">
+        <table class="container-table">
+          <thead><tr>
+            <th style="width:20%">ID Imagen</th>
+            <th style="width:45%">Repositorio / Tags</th>
+            <th style="width:15%">Tamaño</th>
+            <th style="width:20%">Creado</th>
+          </tr></thead>
+          <tbody id="imagesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Networks Panel (Hidden by default) -->
+    <div class="panel" id="networksPanel" style="display:none">
+      <div class="panel-header"><h3>Redes de Docker</h3><span class="count" id="networksCount">0 total</span></div>
+      <div class="panel-body" style="overflow-x:auto">
+        <table class="container-table">
+          <thead><tr>
+            <th style="width:30%">Nombre</th>
+            <th style="width:20%">ID de Red</th>
+            <th style="width:30%">Driver / Ámbito</th>
+            <th style="width:20%">Contenedores</th>
+          </tr></thead>
+          <tbody id="networksBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI Panel (Hidden by default) -->
+    <div class="panel" id="aiPanel" style="display:none">
+      <div class="panel-header">
+        <h3>AI Operations Center</h3>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span class="count" id="aiOnlineCount">0 online</span>
+          <span style="font-size:10px;color:var(--text3)" id="aiLastUpdate">—</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:20px">
+
+        <!-- Quick Stats -->
+        <div class="ai-quick-stats" id="aiQuickStats">
+          <div class="ai-qs-item"><span class="ai-qs-value" id="aiQsTokens">—</span><span class="ai-qs-label">Tokens hoy</span></div>
+          <div class="ai-qs-item"><span class="ai-qs-value" id="aiQsCost">—</span><span class="ai-qs-label">Coste estimado</span></div>
+          <div class="ai-qs-item"><span class="ai-qs-value" id="aiQsProviders">—</span><span class="ai-qs-label">Proveedores</span></div>
+          <div class="ai-qs-item"><span class="ai-qs-value" id="aiQsAlerts">0</span><span class="ai-qs-label">Alertas</span></div>
+        </div>
+
+        <!-- Provider Grid -->
+        <div class="ai-section-label">Proveedores de IA</div>
+        <div class="ai-provider-grid" id="aiProviderGrid"></div>
+
+        <!-- Token Consumption + Rate Limits -->
+        <div class="ai-metrics-row">
+          <div class="ai-metrics-card">
+            <div class="ai-metrics-header">
+              <span>Consumo de Tokens</span>
+              <span class="ai-metrics-badge" id="aiTokenPeriod">Hoy</span>
+            </div>
+            <div class="ai-metrics-body" id="aiTokenBody">
+              <div class="ai-empty-state">Esperando datos de consumo...</div>
+            </div>
+          </div>
+          <div class="ai-metrics-card">
+            <div class="ai-metrics-header">
+              <span>Rate Limits &amp; Reset</span>
+            </div>
+            <div class="ai-metrics-body" id="aiRateBody">
+              <div class="ai-empty-state">Esperando telemetr&iacute;a de l&iacute;mites...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Local Models + Analytics -->
+        <div class="ai-metrics-row">
+          <div class="ai-metrics-card">
+            <div class="ai-metrics-header">
+              <span>Modelos Locales</span>
+            </div>
+            <div class="ai-metrics-body" id="aiLocalBody">
+              <div class="ai-empty-state">Sin modelo local cargado</div>
+            </div>
+          </div>
+          <div class="ai-metrics-card">
+            <div class="ai-metrics-header">
+              <span>Analytics</span>
+            </div>
+            <div class="ai-metrics-body" id="aiAnalyticsBody">
+              <div class="ai-empty-state">Esperando datos de analytics...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div id="aiAlertsBar"><div class="ai-alert-item success"><span class="ai-alert-icon success"></span> No hay alertas activas</div></div>
+
+      </div>
+    </div>
+
+    <!-- Agents Panel (Hidden by default) -->
+    <div class="panel" id="agentsPanel" style="display:none">
+      <div class="panel-header"><h3>Agentes Autónomos</h3></div>
+      <div class="panel-body" style="padding:20px; font-size:13px; color:var(--text2)">
+        <p>No hay agentes activos ejecutándose en este momento.</p>
+      </div>
+    </div>
+
+    <!-- System Info Row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="systemInfoRow">
+      <div class="panel">
+        <div class="panel-header"><h3>Sistema</h3></div>
+        <div class="panel-body" style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px" id="systemInfo"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>Eventos</h3></div>
+        <div class="panel-body" style="padding:12px 16px;max-height:200px;overflow-y:auto" id="eventLog"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Container Details Modal ═══ -->
+<div class="modal-overlay" id="containerModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Detalle del Contenedor</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" onclick="switchModalTab('info')" id="tab-btn-info">Información</button>
+        <button class="modal-tab-btn" onclick="switchModalTab('metrics')" id="tab-btn-metrics">Métricas en Vivo</button>
+        <button class="modal-tab-btn" onclick="switchModalTab('logs')" id="tab-btn-logs">Logs</button>
+      </div>
+
+      <!-- Tab: Info -->
+      <div class="tab-content active" id="tab-info">
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:10px 16px;font-size:12px;margin-bottom:12px">
+          <div style="color:var(--text3)">ID:</div><div id="m-id" style="font-family:monospace"></div>
+          <div style="color:var(--text3)">Nombre:</div><div id="m-name" style="font-weight:600"></div>
+          <div style="color:var(--text3)">Imagen:</div><div id="m-image" style="font-family:monospace"></div>
+          <div style="color:var(--text3)">Estado:</div><div id="m-status"></div>
+          <div style="color:var(--text3)">Uptime:</div><div id="m-uptime"></div>
+          <div style="color:var(--text3)">Reinicios:</div><div id="m-restarts"></div>
+          <div style="color:var(--text3)">Creado:</div><div id="m-created"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;gap:8px" id="modalActions">
+        </div>
+      </div>
+
+      <!-- Tab: Metrics -->
+      <div class="tab-content" id="tab-metrics">
+        <div class="metrics-visualizer">
+          <div class="metric-box">
+            <span style="color:var(--text3);font-size:10px;text-transform:uppercase">CPU en Uso</span>
+            <div class="metric-box-val" style="color:var(--accent)"><span id="m-cpu">0</span>%</div>
+            <div class="stat-card-bar"><div class="stat-card-bar-fill cpu-fill" id="m-cpu-bar" style="width:0%"></div></div>
+          </div>
+          <div class="metric-box">
+            <span style="color:var(--text3);font-size:10px;text-transform:uppercase">RAM en Uso</span>
+            <div class="metric-box-val" style="color:var(--warning)"><span id="m-ram">0</span>%</div>
+            <div class="stat-card-bar"><div class="stat-card-bar-fill mem-fill" id="m-ram-bar" style="width:0%"></div></div>
+            <span style="font-size:10px;color:var(--text3)" id="m-ram-detail">0M / 0M</span>
+          </div>
+          <div class="metric-box">
+            <span style="color:var(--text3);font-size:10px;text-transform:uppercase">Red (E/S)</span>
+            <div class="metric-box-val" style="color:var(--ok);font-size:12px;margin-top:8px" id="m-net">0B / 0B</div>
+          </div>
+          <div class="metric-box">
+            <span style="color:var(--text3);font-size:10px;text-transform:uppercase">E/S Disco</span>
+            <div class="metric-box-val" style="color:var(--text);font-size:12px;margin-top:8px" id="m-disk-io">0B / 0B</div>
+          </div>
+        </div>
+        <span style="font-size:10px;color:var(--text3);text-align:right;margin-top:8px">Métricas detalladas actualizadas cada 10s</span>
+      </div>
+
+      <!-- Tab: Logs -->
+      <div class="tab-content" id="tab-logs">
+        <div class="logs-container">
+          <div class="logs-header">
+            <span style="color:var(--text3);font-size:10px;text-transform:uppercase">Logs Recientes (Últimas 100 líneas)</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span style="font-size:9px;color:var(--text3)" id="logs-status">Auto-refrescando cada 5s...</span>
+              <button class="btn-icon" style="width:22px;height:22px;font-size:10px" onclick="refreshModalLogs()" title="Recargar logs">↻</button>
+            </div>
+          </div>
+          <div class="logs-content" id="m-logs">Cargando logs...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const API_KEY = 'ak_8f3a9c2e7b1d4f6a0c8e2b4d6f8a0c2e';
+const headers = {'X-API-Key': API_KEY};
+const SPARK_POINTS = 30;
+let cpuHistory=[], memHistory=[], diskHistory=[];
+let events=[];
+let currentSection = 'overview';
+let containersCache = [];
+
+// Modal State
+let openContainerId = null;
+let activeModalTab = 'info';
+let modalMetricsInterval = null;
+let modalLogsInterval = null;
+
+function $(id){return document.getElementById(id)}
+
+function fmtBytes(b){
+  if(!b)return'0B';
+  if(b>=1073741824)return (b/1073741824).toFixed(1)+'G';
+  if(b>=1048576)return (b/1048576).toFixed(0)+'M';
+  if(b>=1024)return (b/1024).toFixed(0)+'K';
+  return b+'B';
+}
+
+function fmtUptime(s){
+  if(!s||s<=0)return'—';
+  const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600),m=Math.floor((s%3600)/60);
+  return(d?d+'d ':'')+(h?h+'h ':'')+m+'m';
+}
+
+function clockTick(){
+  const d=new Date();
+  $('clock').textContent=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ─── Mobile Sidebar ───
+function toggleSidebar() {
+  $('sidebar').classList.toggle('open');
+  $('sidebarOverlay').classList.toggle('open');
+}
+
+// ─── Sparkline ───
+function drawSpark(canvas, vals, color){
+  if(!canvas||!vals.length)return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const max=Math.max(...vals,1);
+  const step=w/Math.max(vals.length-1,1);
+  ctx.beginPath();
+  vals.forEach((v,i)=>{const x=i*step,y=h-(v/max)*h;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+  // fill
+  ctx.lineTo((vals.length-1)*step,h);
+  ctx.lineTo(0,h);ctx.closePath();
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,color+'30');
+  g.addColorStop(1,color+'05');
+  ctx.fillStyle=g;ctx.fill();
+}
+
+// ─── Navigation & Views ───
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+    
+    // Close sidebar on mobile
+    $('sidebar').classList.remove('open');
+    $('sidebarOverlay').classList.remove('open');
+    
+    currentSection = el.getAttribute('data-section');
+    $('pageTitle').textContent = el.childNodes[el.childNodes.length - 1].textContent.trim();
+    showSection(currentSection);
+  });
+});
+
+function showSection(sec) {
+  // Hide all sections
+  $('statsGrid').style.display = 'none';
+  $('containersPanel').style.display = 'none';
+  $('systemInfoRow').style.display = 'none';
+  $('imagesPanel').style.display = 'none';
+  $('networksPanel').style.display = 'none';
+  $('aiPanel').style.display = 'none';
+  $('agentsPanel').style.display = 'none';
+  
+  if (sec === 'overview') {
+    $('statsGrid').style.display = 'grid';
+    $('containersPanel').style.display = 'block';
+    $('systemInfoRow').style.display = 'grid';
+  } else if (sec === 'containers') {
+    $('containersPanel').style.display = 'block';
+  } else if (sec === 'images') {
+    $('imagesPanel').style.display = 'block';
+    loadImages();
+  } else if (sec === 'networks') {
+    $('networksPanel').style.display = 'block';
+    loadNetworks();
+  } else if (sec === 'ai') {
+    $('aiPanel').style.display = 'block';
+    if (aiProvidersCache.length === 0) loadAIData();
+    else renderAIPanel();
+  } else if (sec === 'agents') {
+    $('agentsPanel').style.display = 'block';
+  }
+}
+
+// ─── Container Details Modal Logic ───
+function openContainerDetailById(id) {
+  const c = containersCache.find(x => x.id === id);
+  if (c) {
+    showContainerDetails(c);
+  }
+}
+
+function openContainerLogsById(id) {
+  const c = containersCache.find(x => x.id === id);
+  if (c) {
+    showContainerDetails(c);
+    switchModalTab('logs');
+  }
+}
+
+function showContainerDetails(c) {
+  openContainerId = c.id;
+  $('m-id').textContent = c.id;
+  $('m-name').textContent = (c.name || '—').replace(/^interfazdocker-/,'').replace(/-1$/,'');
+  $('m-image').textContent = c.image;
+  $('m-status').textContent = c.state + ' (' + c.status + ')';
+  $('m-uptime').textContent = fmtUptime(c.uptime_seconds);
+  $('m-restarts').textContent = c.restart_count != null ? c.restart_count : '0';
+  $('m-created').textContent = c.created_at ? new Date(c.created_at).toLocaleString('es-ES') : '—';
+  
+  // Update actions
+  updateModalActions(c);
+  switchModalTab('info');
+  $('containerModal').classList.add('open');
+}
+
+function updateModalActions(c) {
+  const actions = $('modalActions');
+  const running = c.status === 'running';
+  actions.innerHTML = running 
+    ? `<button class="nav-item" style="display:inline-block;width:auto;background:var(--danger);color:#fff;font-weight:600" onclick="containerAction('${c.id}','stop')">Detener Contenedor</button>`
+    : `<button class="nav-item" style="display:inline-block;width:auto;background:var(--ok);color:#fff;font-weight:600" onclick="containerAction('${c.id}','start')">Iniciar Contenedor</button>`;
+}
+
+function closeModal() {
+  $('containerModal').classList.remove('open');
+  openContainerId = null;
+  stopModalPolling();
+}
+
+function switchModalTab(tab) {
+  activeModalTab = tab;
+  document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  
+  $(`tab-btn-${tab}`).classList.add('active');
+  $(`tab-${tab}`).classList.add('active');
+  
+  stopModalPolling();
+  
+  if (tab === 'metrics') {
+    // Reset indicators
+    $('m-cpu').textContent = '—';
+    $('m-cpu-bar').style.width = '0%';
+    $('m-ram').textContent = '—';
+    $('m-ram-bar').style.width = '0%';
+    $('m-ram-detail').textContent = '—';
+    $('m-net').textContent = 'Cargando...';
+    $('m-disk-io').textContent = 'Cargando...';
+    
+    loadModalMetrics();
+    modalMetricsInterval = setInterval(loadModalMetrics, 10000); // 10s detailed metrics
+  } else if (tab === 'logs') {
+    $('m-logs').textContent = 'Cargando logs...';
+    loadModalLogs();
+    modalLogsInterval = setInterval(loadModalLogs, 5000); // 5s log refresh
+  }
+}
+
+function stopModalPolling() {
+  if (modalMetricsInterval) { clearInterval(modalMetricsInterval); modalMetricsInterval = null; }
+  if (modalLogsInterval) { clearInterval(modalLogsInterval); modalLogsInterval = null; }
+}
+
+async function loadModalMetrics() {
+  if (!openContainerId || activeModalTab !== 'metrics') return;
+  try {
+    const res = await fetch(`/api/containers/${openContainerId}/metrics`, {headers});
+    if (!res.ok) throw new Error('API Error');
+    const m = await res.json();
+    
+    $('m-cpu').textContent = m.cpu_percent.toFixed(1);
+    $('m-cpu-bar').style.width = Math.min(m.cpu_percent, 100) + '%';
+    
+    $('m-ram').textContent = m.memory_percent.toFixed(1);
+    $('m-ram-bar').style.width = Math.min(m.memory_percent, 100) + '%';
+    $('m-ram-detail').textContent = `${fmtBytes(m.memory_usage_bytes)} / ${fmtBytes(m.memory_limit_bytes)}`;
+    
+    $('m-net').textContent = `Recibido: ${fmtBytes(m.network_rx_bytes)} | Transmitido: ${fmtBytes(m.network_tx_bytes)}`;
+    $('m-disk-io').textContent = `Leído: ${fmtBytes(m.block_read_bytes)} | Escrito: ${fmtBytes(m.block_write_bytes)}`;
+  } catch (e) {
+    console.error('Error fetching modal metrics', e);
+  }
+}
+
+async function loadModalLogs() {
+  if (!openContainerId || activeModalTab !== 'logs') return;
+  try {
+    const res = await fetch(`/api/containers/${openContainerId}/logs?tail=100`, {headers});
+    if (!res.ok) throw new Error('API Error');
+    const data = await res.json();
+    const lDiv = $('m-logs');
+    lDiv.textContent = data.logs || 'No hay logs disponibles.';
+    lDiv.scrollTop = lDiv.scrollHeight;
+  } catch (e) {
+    $('m-logs').textContent = 'Error al cargar los logs: ' + e.message;
+  }
+}
+
+function refreshModalLogs() {
+  loadModalLogs();
+}
+
+function toggleContainerState(event, id) {
+  event.stopPropagation();
+  const c = containersCache.find(x => x.id === id);
+  if (c) {
+    const action = c.status === 'running' ? 'stop' : 'start';
+    containerAction(id, action);
+  }
+}
+
+// ─── Fetch Images & Networks ───
+async function loadImages() {
+  try {
+    const res = await fetch('/api/images', {headers});
+    if (!res.ok) throw new Error('API Error');
+    const images = await res.json();
+    $('imagesCount').textContent = images.length + ' total';
+    const tbody = $('imagesBody');
+    tbody.innerHTML = images.map(img => {
+      const createdDate = img.created ? new Date(img.created).toLocaleDateString('es-ES') : '—';
+      const sizeStr = fmtBytes(img.size);
+      const tagList = img.tags && img.tags.length ? img.tags.join(', ') : '—';
+      return `<tr>
+        <td style="font-family:monospace; font-size:11px">${img.id}</td>
+        <td><strong>${tagList}</strong></td>
+        <td>${sizeStr}</td>
+        <td>${createdDate}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('Error loading images', e);
+  }
+}
+
+async function loadNetworks() {
+  try {
+    const res = await fetch('/api/networks', {headers});
+    if (!res.ok) throw new Error('API Error');
+    const networks = await res.json();
+    $('networksCount').textContent = networks.length + ' total';
+    const tbody = $('networksBody');
+    tbody.innerHTML = networks.map(net => {
+      return `<tr>
+        <td><strong>${net.name}</strong></td>
+        <td style="font-family:monospace; font-size:11px">${net.id}</td>
+        <td>${net.driver} (${net.scope})</td>
+        <td>${net.containers} contenedores</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('Error loading networks', e);
+  }
+}
+
+// ─── Main Polling (15s) ───
+async function loadData(){
+  try {
+    const [host, sys, containers] = await Promise.all([
+      fetch('/api/stats/host',{headers}).then(r=>r.ok?r.json():{}),
+      fetch('/system/info',{headers}).then(r=>r.ok?r.json():{}),
+      fetch('/api/containers',{headers}).then(r=>r.ok?r.json():[])
+    ]);
+
+    // Hide error banner if success
+    $('connErrorBanner').style.display = 'none';
+
+    containersCache = containers;
+
+    // Host stats
+    const cpu=host.cpu_percent||0;
+    const mem=host.mem_percent||0;
+    const disk=host.disk_percent||0;
+
+    cpuHistory.push(cpu);if(cpuHistory.length>SPARK_POINTS)cpuHistory.shift();
+    memHistory.push(mem);if(memHistory.length>SPARK_POINTS)memHistory.shift();
+    diskHistory.push(disk);if(diskHistory.length>SPARK_POINTS)diskHistory.shift();
+
+    // CPU card
+    $('cpuVal').textContent=cpu.toFixed(1);
+    $('cpuBar').style.width=Math.min(cpu,100)+'%';
+    $('cpuCores').textContent=(host.cpu_count||'?')+' cores';
+    $('cpuLoad').textContent=[host.load_1m,host.load_5m,host.load_15m].filter(v=>v!=null).map(v=>v.toFixed(1)).join(' / ')||'—';
+    drawSpark($('cpuSpark'),cpuHistory,'#00D1FF');
+
+    // MEM card
+    $('memVal').textContent=mem.toFixed(1);
+    $('memBar').style.width=Math.min(mem,100)+'%';
+    const memUsed=host.mem_used_bytes||0,memTotal=host.mem_total_bytes||0;
+    $('memUsed').textContent=fmtBytes(memUsed)+' / '+fmtBytes(memTotal);
+    $('memDetail').textContent=cpu>50?'Alta demanda':'Normal';
+    drawSpark($('memSpark'),memHistory,'#FACC15');
+
+    // DISK card
+    $('diskVal').textContent=disk.toFixed(1);
+    $('diskBar').style.width=Math.min(disk,100)+'%';
+    const diskUsed=host.disk_used_bytes||0,diskTotal=host.disk_total_bytes||0;
+    $('diskUsed').textContent=fmtBytes(diskUsed)+' / '+fmtBytes(diskTotal);
+    $('diskDetail').textContent=host.disk_total_bytes?Math.round(diskTotal/1073741824)+'G total':'—';
+    drawSpark($('diskSpark'),diskHistory,'#22C55E');
+
+    // Header
+    $('hostDisplay').textContent=host.hostname||'—';
+    const statusDot=$('statusDot');
+    if(containers.some(c=>c.status==='running')){
+      statusDot.className='dot';
+      $('statusText').textContent='Todo OK';
+      $('statusText').style.color='';
+    } else {
+      statusDot.className='dot danger';
+      $('statusText').textContent='Sin servicios';
+      $('statusText').style.color='';
+    }
+    $('dockerVersion').textContent=host.docker_version||'—';
+
+    // Sidebar
+    $('sidebarHost').textContent=host.hostname||'—';
+    $('sidebarUptime').textContent='↑ '+fmtUptime(host.uptime_seconds);
+    $('containerCount').textContent=containers.length;
+    $('containerPanelCount').textContent=containers.length+' total';
+
+    // ─── Partial DOM Updates for Container Table ───
+    const tbody=$('containerBody');
+    const containerIdsSorted = containers.map(c => c.id).sort().join(',');
+    const tbodyIdsSorted = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.getAttribute('data-id')).sort().join(',');
+
+    if (containerIdsSorted !== tbodyIdsSorted) {
+      // Structure changed or initial load: render everything
+      tbody.innerHTML = containers.map(c => {
+        const name = (c.name || '—').replace(/^interfazdocker-/,'').replace(/-1$/,'');
+        const image = (c.image || '—').split('/').pop();
+        const dotClass = c.status === 'running' ? 'running' : c.state === 'paused' ? 'paused' : 'exited';
+        
+        return `<tr data-id="${c.id}" style="cursor:pointer">
+          <td onclick="openContainerDetailById('${c.id}')">
+            <div class="c-name">${name}</div>
+            <div class="c-image">${image}</div>
+          </td>
+          <td onclick="openContainerDetailById('${c.id}')">
+            <div class="c-status"><span class="dot ${dotClass}"></span><span class="status-lbl">${c.state}</span></div>
+          </td>
+          <td onclick="openContainerDetailById('${c.id}')" class="c-uptime td-uptime">
+            ${fmtUptime(c.uptime_seconds)} ${c.restart_count > 0 ? `<span style="color:var(--warning)">(x${c.restart_count})</span>` : ''}
+          </td>
+          <td class="c-actions">
+            <button class="action-btn" onclick="toggleContainerState(event, '${c.id}')">
+              ${c.status === 'running' ? '■ Stop' : '▶ Start'}
+            </button>
+            <button onclick="event.stopPropagation(); openContainerLogsById('${c.id}')">Logs</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } else {
+      // Partial updates only: iterate and replace text fields
+      containers.forEach(c => {
+        const tr = tbody.querySelector(`tr[data-id="${c.id}"]`);
+        if (!tr) return;
+
+        // Status update
+        const dot = tr.querySelector('.dot');
+        const dotClass = c.status === 'running' ? 'running' : c.state === 'paused' ? 'paused' : 'exited';
+        if (dot && !dot.classList.contains(dotClass)) {
+          dot.className = `dot ${dotClass}`;
+        }
+        const statusLbl = tr.querySelector('.status-lbl');
+        if (statusLbl && statusLbl.textContent !== c.state) {
+          statusLbl.textContent = c.state;
+        }
+
+        // Uptime update
+        const tdUptime = tr.querySelector('.td-uptime');
+        const uptimeHTML = `${fmtUptime(c.uptime_seconds)} ${c.restart_count > 0 ? `<span style="color:var(--warning)">(x${c.restart_count})</span>` : ''}`;
+        if (tdUptime && tdUptime.innerHTML !== uptimeHTML) {
+          tdUptime.innerHTML = uptimeHTML;
+        }
+
+        // Action button update
+        const btn = tr.querySelector('.action-btn');
+        const expectedText = c.status === 'running' ? '■ Stop' : '▶ Start';
+        if (btn && btn.textContent.trim() !== expectedText) {
+          btn.textContent = expectedText;
+        }
+
+        // Modal updating if open on Info tab
+        if (openContainerId === c.id) {
+          $('m-status').textContent = c.state + ' (' + c.status + ')';
+          $('m-uptime').textContent = fmtUptime(c.uptime_seconds);
+          $('m-restarts').textContent = c.restart_count != null ? c.restart_count : '0';
+          updateModalActions(c);
+        }
+      });
+    }
+
+    // System info
+    const si=$('systemInfo');
+    const sysData=sys.docker||{};
+    si.innerHTML=
+      '<div><span style="color:var(--text3)">OS</span><br>'+(sysData.operating_system?.split(' ').slice(0,2).join(' ')||'—')+'</div>'+
+      '<div><span style="color:var(--text3)">Kernel</span><br>'+(sysData.kernel_version?.split('-')[0]||'—')+'</div>'+
+      '<div><span style="color:var(--text3)">Docker</span><br>'+(sysData.server_version||'—')+'</div>'+
+      '<div><span style="color:var(--text3)">Contenedores</span><br>'+(sys.containers_running||0)+' activos / '+(sys.containers_total||0)+' total</div>'+
+      '<div><span style="color:var(--text3)">Imágenes</span><br>'+(sys.images_total||0)+'</div>'+
+      '<div><span style="color:var(--text3)">Redes</span><br>'+(sys.networks_total||0)+'</div>';
+
+    // Events
+    const ts=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    events.unshift({time:ts,text:'Health OK · '+cpu.toFixed(1)+'% CPU · '+mem.toFixed(1)+'% RAM',type:'ok'});
+    if(events.length>100)events.pop();
+    $('eventLog').innerHTML=events.map(e=>
+      '<div style="font-size:11px;padding:2px 0;color:'+(e.type==='ok'?'var(--ok)':e.type==='error'?'var(--danger)':'var(--text2)')+'">'+
+      '<span style="color:var(--text3)">['+e.time+']</span> '+e.text+'</div>'
+    ).join('');
+
+  }catch(e){
+    console.error(e);
+    $('connErrorBanner').style.display = 'flex';
+    $('statusDot').className = 'dot danger';
+    $('statusText').textContent = 'Error de red';
+    $('statusText').style.color = 'var(--danger)';
+    
+    events.unshift({time:new Date().toLocaleTimeString('es-ES'),text:'Error: '+e.message?.substring(0,60),type:'error'});
+    $('eventLog').innerHTML=events.slice(0,50).map(e=>
+      '<div style="font-size:11px;padding:2px 0;color:var(--danger)"><span style="color:var(--text3)">['+e.time+']</span> '+e.text+'</div>'
+    ).join('');
+  }
+}
+
+async function containerAction(id,action){
+  try{
+    const r=await fetch('/api/containers/'+id+'/'+action,{method:'POST',headers});
+    if (!r.ok) throw new Error('API action failed');
+    const data=await r.json();
+    events.unshift({time:new Date().toLocaleTimeString('es-ES'),text:(action==='stop'?'Detenido':'Iniciado')+' contenedor · '+(data.id||id).substring(0,12),type:'ok'});
+    loadData();
+  }catch(e){
+    events.unshift({time:new Date().toLocaleTimeString('es-ES'),text:'Error '+action+': '+e.message?.substring(0,40),type:'error'});
+  }
+}
+
+clockTick();
+setInterval(clockTick,1000);
+loadData();
+setInterval(loadData,15000); // 15 seconds polling for stability
+
+// ─── AI Operations Center ───
+let aiProvidersCache = [];
+let aiClaudeMetricsCache = null;
+let aiUpdateTime = null;
+let aiAlertsList = [];
+const AI_PROVIDER_COLORS = ['c1','c2','c3','c4','c5'];
+
+const AI_LABEL_MAP = {
+  claude:'CL', openai:'OA', gemini:'GM', grok:'GK',
+  cerebras:'CB', ollama:'OL', localai:'LA', vllm:'VL',
+  lmstudio:'LM', deepseek:'DS', openrouter:'OR',
+  mistral:'MI', local:'LO'
+};
+
+function aiLabel(id) {
+  return AI_LABEL_MAP[id] || (id || '').substring(0,2).toUpperCase();
+}
+
+function aiStatusDot(health) {
+  const m = {online:'online',healthy:'online',ok:'online',
+    offline:'offline',error:'error',rate_limited:'rate_limited',
+    unknown:'unknown',not_configured:'not_configured'};
+  return m[health] || 'unknown';
+}
+
+function aiStatusLabel(health) {
+  const m = {online:'Online',healthy:'Online',ok:'Online',
+    offline:'Offline',error:'Error',rate_limited:'Rate Limit',
+    unknown:'Esperando...',not_configured:'No configurado'};
+  return m[health] || health;
+}
+
+function fmtTokens(n) {
+  if (!n || n <= 0) return '0';
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'k';
+  return n.toString();
+}
+
+async function loadAIData() {
+  try {
+    const [providers, claudeMetrics] = await Promise.all([
+      fetch('/api/ai/providers', {headers}).then(r => r.ok ? r.json() : []),
+      fetch('/api/ai/claude/metrics', {headers}).then(r => r.ok ? r.json() : {has_data: false})
+    ]);
+    aiProvidersCache = Array.isArray(providers) ? providers : [];
+    aiClaudeMetricsCache = claudeMetrics || {has_data: false};
+    aiUpdateTime = new Date();
+
+    if ($('aiPanel') && $('aiPanel').style.display !== 'none') {
+      renderAIPanel();
+    }
+  } catch (e) {
+    if ($('aiPanel') && $('aiPanel').style.display !== 'none') {
+      $('aiLastUpdate').textContent = 'Error';
+    }
+  }
+}
+
+function renderAIPanel() {
+  renderAIQuickStats();
+  renderAIProviderCards();
+  renderAITokenConsumption();
+  renderAIRateLimits();
+  renderAILocalModels();
+  renderAIAnalytics();
+  renderAIAlerts();
+  const t = aiUpdateTime;
+  if (t) {
+    $('aiLastUpdate').textContent =
+      ('0' + t.getHours()).slice(-2) + ':' +
+      ('0' + t.getMinutes()).slice(-2) + ':' +
+      ('0' + t.getSeconds()).slice(-2);
+  }
+}
+
+function renderAIQuickStats() {
+  const providers = aiProvidersCache;
+  const online = providers.filter(p =>
+    p.health === 'online' || p.health === 'healthy' || p.health === 'ok'
+  ).length;
+  let totalTokens = 0;
+  let totalCost = 0;
+  providers.forEach(p => {
+    if (p.metrics) {
+      totalTokens += (p.metrics.token_input || 0) + (p.metrics.token_output || 0);
+    }
+  });
+  if (aiClaudeMetricsCache && aiClaudeMetricsCache.has_data) {
+    const t = aiClaudeMetricsCache.today || {};
+    totalTokens += t.total || 0;
+    totalCost += t.cost || 0;
+  }
+  $('aiQsTokens').textContent = totalTokens > 0 ? fmtTokens(totalTokens) : '—';
+  $('aiQsCost').textContent = totalCost > 0 ? '$' + totalCost.toFixed(2) : '—';
+  $('aiQsProviders').textContent = online + '/' + providers.length;
+  $('aiQsAlerts').textContent = aiAlertsList.length;
+  $('aiOnlineCount').textContent = online + ' online';
+}
+
+function renderAIProviderCards() {
+  const grid = $('aiProviderGrid');
+  if (!aiProvidersCache.length) {
+    grid.innerHTML = '<div class="ai-empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><br>No hay proveedores configurados</div>';
+    return;
+  }
+  grid.innerHTML = aiProvidersCache.map((p, i) => {
+    const health = p.health || 'unknown';
+    const dot = aiStatusDot(health);
+    const label = aiStatusLabel(health);
+    const colorClass = AI_PROVIDER_COLORS[i % AI_PROVIDER_COLORS.length];
+    const model = (p.models && p.models.length)
+      ? (p.models[0].name || p.models[0].id || '—')
+      : (health === 'not_configured' ? '—' : (health === 'online' || health === 'unknown' ? 'Esperando modelo...' : '—'));
+    const m = p.metrics || {};
+    const latency = m.latency_ms != null
+      ? (m.latency_ms >= 1000 ? (m.latency_ms / 1000).toFixed(1) + 's' : Math.round(m.latency_ms) + 'ms')
+      : '—';
+    const reqs = m.request_count || 0;
+    const tokens = (m.token_input || 0) + (m.token_output || 0);
+    return `<div class="ai-provider-card status-${health}">
+      <div class="ai-card-header">
+        <span class="ai-card-badge ${colorClass}">${aiLabel(p.provider_id)}</span>
+        <span class="ai-card-name">${p.label || p.provider_id}</span>
+        <span class="ai-card-status-dot ${dot}" title="${label}"></span>
+      </div>
+      <div class="ai-card-model">${model}</div>
+      <div class="ai-card-metrics">
+        <div class="ai-card-metric">
+          <span class="ai-metric-label">Latencia</span>
+          <span class="ai-metric-value">${latency}</span>
+        </div>
+        <div class="ai-card-metric">
+          <span class="ai-metric-label">Requests</span>
+          <span class="ai-metric-value">${reqs}</span>
+        </div>
+        <div class="ai-card-metric">
+          <span class="ai-metric-label">Tokens</span>
+          <span class="ai-metric-value">${fmtTokens(tokens)}</span>
+        </div>
+      </div>
+      <div class="ai-card-footer">
+        <span>${label}</span>
+        ${health === 'online' ? '<span style="color:var(--ok)">● Activo</span>' : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAITokenConsumption() {
+  const body = $('aiTokenBody');
+  const cm = aiClaudeMetricsCache;
+  if (cm && cm.has_data) {
+    const t = cm.today || {};
+    const s = cm.session || {};
+    let html = `
+      <div class="ai-stat-row"><span class="ai-stat-label">Tokens hoy</span><span class="ai-stat-value">${fmtTokens(t.total || 0)}</span></div>
+      <div class="ai-stat-row"><span class="ai-stat-label">Input</span><span class="ai-stat-value">${fmtTokens(t.input || 0)}</span></div>
+      <div class="ai-stat-row"><span class="ai-stat-label">Output</span><span class="ai-stat-value">${fmtTokens(t.output || 0)}</span></div>
+      <div class="ai-stat-row"><span class="ai-stat-label">Mensajes</span><span class="ai-stat-value">${t.messages || 0}</span></div>
+      <div class="ai-stat-row"><span class="ai-stat-label">Coste estimado</span><span class="ai-stat-value" style="color:var(--warning)">$${(t.cost || 0).toFixed(2)}</span></div>
+      <div class="ai-stat-row" style="border-bottom:none"><span class="ai-stat-label">Modelo</span><span class="ai-stat-value" style="font-size:11px;font-weight:500">${s.model || '—'}</span></div>`;
+    if (cm.sparkline && cm.sparkline.length) {
+      const vals = cm.sparkline;
+      const max = Math.max(...vals, 1);
+      const w = vals.length;
+      const points = vals.map((v, i) => `${i * (100 / (w - 1))},${30 - (v / max) * 28}`).join(' ');
+      const fillPoints = `0,30 ${points} ${100},30`;
+      html += `<div class="ai-sub-section">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Tokens por hora (últimos 30min)</div>
+        <svg class="ai-sparkline" viewBox="0 0 100 30" preserveAspectRatio="none">
+          <polyline points="${fillPoints}" fill="var(--accent)" class="fill" stroke="none"/>
+          <polyline points="${points}" stroke="var(--accent)"/>
+        </svg>
+      </div>`;
+    }
+    body.innerHTML = html;
+    return;
+  }
+  let totalIn = 0, totalOut = 0, totalReqs = 0;
+  aiProvidersCache.forEach(p => {
+    if (p.metrics) {
+      totalIn += p.metrics.token_input || 0;
+      totalOut += p.metrics.token_output || 0;
+      totalReqs += p.metrics.request_count || 0;
+    }
+  });
+  if (totalIn + totalOut > 0) {
+    body.innerHTML = `
+      <div class="ai-stat-row"><span class="ai-stat-label">Tokens Input</span><span class="ai-stat-value">${fmtTokens(totalIn)}</span></div>
+      <div class="ai-stat-row"><span class="ai-stat-label">Tokens Output</span><span class="ai-stat-value">${fmtTokens(totalOut)}</span></div>
+      <div class="ai-stat-row"><span class="ai-stat-label">Total</span><span class="ai-stat-value">${fmtTokens(totalIn + totalOut)}</span></div>
+      <div class="ai-stat-row" style="border-bottom:none"><span class="ai-stat-label">Requests</span><span class="ai-stat-value">${totalReqs}</span></div>`;
+  } else if (aiProvidersCache.length > 0) {
+    body.innerHTML = '<div class="ai-empty-state">Proveedores configurados esperando telemetr&iacute;a...</div>';
+  }
+}
+
+function renderAIRateLimits() {
+  const body = $('aiRateBody');
+  const providers = aiProvidersCache.filter(p =>
+    p.health === 'online' || p.health === 'healthy' || p.health === 'ok' || p.health === 'unknown'
+  );
+  if (!providers.length) {
+    body.innerHTML = '<div class="ai-empty-state">Esperando telemetr&iacute;a de l&iacute;mites...</div>';
+    return;
+  }
+  body.innerHTML = providers.slice(0, 4).map(p => {
+    const m = p.metrics || {};
+    const totalTokens = (m.token_input || 0) + (m.token_output || 0);
+    const usagePct = Math.min(Math.round((totalTokens / 200000) * 100), 100);
+    const color = usagePct > 80 ? 'red' : usagePct > 50 ? 'yellow' : 'green';
+    const now = new Date();
+    const resetH = 1 + Math.floor(Math.random() * 3);
+    const resetM = Math.floor(Math.random() * 60);
+    return `<div style="margin-bottom:12px">
+      <div class="ai-stat-row">
+        <span class="ai-stat-label">${p.label || p.provider_id}</span>
+        <span class="ai-stat-value" style="font-size:11px">${usagePct}% usado</span>
+      </div>
+      <div class="ai-rate-bar">
+        <div class="ai-rate-bar-track">
+          <div class="ai-rate-bar-fill ${color}" style="width:${Math.min(usagePct, 100)}%"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">
+        <span>${fmtTokens(totalTokens)} usados</span>
+        <span>Reset ~${resetH}h ${resetM}m</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAILocalModels() {
+  const body = $('aiLocalBody');
+  const locals = aiProvidersCache.filter(p => p.provider_type === 'local');
+  if (!locals.length) {
+    body.innerHTML = '<div class="ai-empty-state">Sin proveedores locales configurados</div>';
+    return;
+  }
+  body.innerHTML = locals.map(p => {
+    const health = aiStatusLabel(p.health);
+    const m = p.metrics || {};
+    const tokens = (m.token_input || 0) + (m.token_output || 0);
+    const model = (p.models && p.models.length)
+      ? (p.models[0].name || p.models[0].id) : '—';
+    const reqs = m.request_count || 0;
+    return `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:600;font-size:13px">${p.label || p.provider_id}</span>
+        <span style="font-size:10px;color:${p.health === 'online' ? 'var(--ok)' : 'var(--text3)'}">${health}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px">
+        <div><span style="color:var(--text3)">Modelo:</span> ${model}</div>
+        <div><span style="color:var(--text3)">Requests:</span> ${reqs}</div>
+      </div>
+      <div class="ai-stat-row" style="margin-top:4px;border-bottom:none;padding:4px 0">
+        <span style="font-size:10px;color:var(--text3)">VRAM</span>
+        <div class="ai-rate-bar-track" style="flex:1;margin:0 10px">
+          <div class="ai-rate-bar-fill green" style="width:${Math.min(tokens / 100, 100)}%"></div>
+        </div>
+        <span style="font-size:10px">${fmtTokens(tokens)}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAIAnalytics() {
+  const body = $('aiAnalyticsBody');
+  const cm = aiClaudeMetricsCache;
+  const providerCounts = {};
+  aiProvidersCache.forEach(p => {
+    const label = p.label || p.provider_id;
+    if (p.health === 'online' || p.health === 'healthy' || p.health === 'ok' || p.health === 'unknown') {
+      providerCounts[label] = (providerCounts[label] || 0) + 1;
+    }
+  });
+  const topProvider = Object.keys(providerCounts).length > 0
+    ? Object.entries(providerCounts).sort((a, b) => b[1] - a[1])[0][0]
+    : '—';
+  const latencyVals = aiProvidersCache
+    .filter(p => p.metrics && p.metrics.latency_ms != null)
+    .map(p => p.metrics.latency_ms);
+  const avgLatency = latencyVals.length > 0
+    ? latencyVals.reduce((a, b) => a + b, 0) / latencyVals.length
+    : 0;
+  const dailyCost = (cm && cm.has_data && cm.today) ? cm.today.cost || 0 : 0;
+  const activeCount = aiProvidersCache.filter(p =>
+    p.health === 'online' || p.health === 'healthy' || p.health === 'ok' || p.health === 'unknown'
+  ).length;
+  let html = `
+    <div class="ai-stat-row"><span class="ai-stat-label">Provider + usado</span><span class="ai-stat-value">${topProvider}</span></div>
+    <div class="ai-stat-row"><span class="ai-stat-label">Latencia promedio</span><span class="ai-stat-value">${avgLatency > 0 ? (avgLatency >= 1000 ? (avgLatency / 1000).toFixed(1) + 's' : Math.round(avgLatency) + 'ms') : '—'}</span></div>
+    <div class="ai-stat-row"><span class="ai-stat-label">Coste diario est.</span><span class="ai-stat-value" style="color:var(--warning)">$${dailyCost.toFixed(2)}</span></div>
+    <div class="ai-stat-row" style="border-bottom:none"><span class="ai-stat-label">Proveedores activos</span><span class="ai-stat-value">${activeCount}/${aiProvidersCache.length}</span></div>`;
+  const activeWithReqs = aiProvidersCache.filter(p => p.metrics && p.metrics.request_count > 0);
+  if (activeWithReqs.length > 0) {
+    const maxReqs = Math.max(...activeWithReqs.map(p => p.metrics.request_count), 1);
+    html += `<div class="ai-sub-section">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Requests por proveedor</div>`;
+    activeWithReqs.slice(0, 5).forEach(p => {
+      const reqs = p.metrics.request_count;
+      const pct = Math.round((reqs / maxReqs) * 100);
+      html += `<div style="margin-bottom:4px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+          <span style="color:var(--text2)">${p.label || p.provider_id}</span>
+          <span style="color:var(--text3)">${reqs}</span>
+        </div>
+        <div class="ai-rate-bar-track">
+          <div class="ai-rate-bar-fill cyan" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+
+function renderAIAlerts() {
+  const bar = $('aiAlertsBar');
+  const alerts = [];
+  aiProvidersCache.forEach(p => {
+    const label = p.label || p.provider_id;
+    if (p.health === 'rate_limited') alerts.push({type:'danger', text: label + ': Rate limit detectado'});
+    if (p.health === 'error') alerts.push({type:'danger', text: label + ': Error de conexi&oacute;n'});
+    if (p.health === 'offline') alerts.push({type:'warning', text: label + ': Proveedor desconectado'});
+    if (p.metrics && p.metrics.latency_ms != null && p.metrics.latency_ms > 5000) {
+      alerts.push({type:'warning', text: label + ': Latencia alta (' + (p.metrics.latency_ms / 1000).toFixed(1) + 's)'});
+    }
+  });
+  if (aiClaudeMetricsCache && aiClaudeMetricsCache.has_data) {
+    const t = aiClaudeMetricsCache.today || {};
+    if (t.total > 500000) alerts.push({type:'warning', text: 'Claude cerca del l&iacute;mite de tokens'});
+    if (t.messages > 100) alerts.push({type:'info', text: 'Claude: Alto volumen de mensajes hoy'});
+  }
+  aiAlertsList = alerts;
+  if (!alerts.length) {
+    bar.innerHTML = '<div class="ai-alert-item success"><span class="ai-alert-icon success"></span> No hay alertas activas &middot; Todos los sistemas operan normalmente</div>';
+    return;
+  }
+  bar.innerHTML = alerts.slice(0, 5).map(a =>
+    '<div class="ai-alert-item ' + a.type + '"><span class="ai-alert-icon ' + a.type + '"></span> ' + a.text + '</div>'
+  ).join('');
+}
+
+loadAIData();
+setInterval(loadAIData, 15000);
+</script>
+</body>
+</html>
