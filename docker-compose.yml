@@ -27,6 +27,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - claude_data:/claude-data:ro
+    group_add:
+      - "${DOCKER_GID:-999}"
     depends_on:
       redis:
         condition: service_healthy
