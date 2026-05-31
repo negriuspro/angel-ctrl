@@ -1,4 +1,4 @@
-# ── Secrets & local config ─────────────────────────────
+﻿# ── Secrets & local config ─────────────────────────────
 .env
 *.pem
 *.key
@@ -40,7 +40,7 @@ scripts/
 
 # ── Other services (not needed in build context) ───────
 infra/mobile-core/
-infra/jarvis-core/
+infra/daniel-core/
 infra/nginx/
 
 # ── OS artifacts ───────────────────────────────────────

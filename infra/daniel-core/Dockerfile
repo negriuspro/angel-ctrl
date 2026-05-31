@@ -15,8 +15,8 @@ COPY client /app/client
 COPY data /app/data
 
 COPY client /usr/share/nginx/html
-COPY infra/jarvis-core/nginx.conf /etc/nginx/conf.d/default.conf
-COPY infra/jarvis-core/entrypoint.sh /entrypoint.sh
+COPY infra/daniel-core/nginx.conf /etc/nginx/conf.d/default.conf
+COPY infra/daniel-core/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 80

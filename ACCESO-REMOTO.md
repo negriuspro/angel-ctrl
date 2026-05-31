@@ -1,11 +1,11 @@
-# Acceso Remoto - Antigravity
+﻿# Acceso Remoto - Antigravity
 
 Tres servicios corriendo en Docker:
 | Servicio | Puerto |
 |---|---|
 | InterfazDocker (panel principal) | 3000 |
 | AntigravityMobile | 3001 |
-| Jarvis (asistente IA) | 3002 |
+| Daniel (asistente IA) | 3002 |
 
 ---
 
@@ -15,7 +15,7 @@ Usa la IP local del PC. Abre en el navegador:
 
 ```
 http://192.168.X.X:3000   → interfazdocker
-http://192.168.X.X:3002   → Jarvis
+http://192.168.X.X:3002   → Daniel
 ```
 
 Para obtener tu IP: `ipconfig` en cmd, busca "Dirección IPv4".

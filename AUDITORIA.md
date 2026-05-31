@@ -1,4 +1,4 @@
-# Auditoría Técnica: Antigravity Control Center (interfazdocker)
+﻿# Auditoría Técnica: Antigravity Control Center (interfazdocker)
 
 **Fecha:** 28 de mayo de 2026
 **Auditor:** Claude Code (revisión automatizada + análisis arquitectónico)
@@ -29,7 +29,7 @@ Antigravity Control Center es un panel de control auto-hospedado para administra
              ┌─────────────────┼────────────────────┐
              ▼                 ▼                    ▼
     ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-    │antigravity   │  │mobile        │  │jarvis        │
+    │antigravity   │  │mobile        │  │daniel        │
     │-core:3000    │  │-core:3001    │  │-core:3002    │
     │              │  │              │  │              │
     │ nginx (80)   │  │ nginx (80)   │  │ nginx (80)   │
@@ -39,7 +39,7 @@ Antigravity Control Center es un panel de control auto-hospedado para administra
            │                  │                  │
            ▼                  ▼                  ▼
     ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-    │antigravity   │  │mobile        │  │jarvis        │
+    │antigravity   │  │mobile        │  │daniel        │
     │-redis        │  │-redis        │  │-redis        │
     └──────────────┘  └──────────────┘  └──────────────┘
 ```
@@ -125,7 +125,7 @@ Antigravity Control Center es un panel de control auto-hospedado para administra
 - Fix aplicado: `rm /etc/nginx/sites-enabled/default` para evitar conflicto Debian
 
 #### Docker Compose:
-- Redes separadas por proyecto (antigravity, mobile, jarvis) — buen aislamiento
+- Redes separadas por proyecto (antigravity, mobile, daniel) — buen aislamiento
 - Docker socket montado en core containers — riesgo de seguridad conocido pero necesario
 - Volúmenes nombrados para Redis — persistencia correcta
 - Sin límites de recursos (memoria/CPU) en los servicios
