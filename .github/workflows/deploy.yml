@@ -1,56 +1,31 @@
-name: Deploy to Ubuntu Server
+name: Deploy angel-ctrl
 
 on:
   push:
     branches:
-      - master
       - main
+      - master
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    name: Deploy to angel-server
+    runs-on: [self-hosted, linux, angel-ctrl]
     timeout-minutes: 15
 
     steps:
-      - name: Pull latest code
-        working-directory: ${{ secrets.DEPLOY_PATH }}
-        run: git pull origin master || git pull origin main
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Build and restart containers
-        working-directory: ${{ secrets.DEPLOY_PATH }}
-        run: docker compose up -d --build --remove-orphans
+      - name: Deploy
+        run: bash /home/angel/deploy/deploy-angel-ctrl.sh
 
-      - name: Wait for backend healthy
-        working-directory: ${{ secrets.DEPLOY_PATH }}
-        run: |
-          RETRIES=0
-          until docker compose ps backend | grep -q "healthy" || [ "$RETRIES" -ge 24 ]; do
-            sleep 5
-            RETRIES=$((RETRIES + 1))
-          done
-          if [ "$RETRIES" -ge 24 ]; then
-            echo "Backend no salio healthy en 2 minutos"
-            docker compose logs --tail=40 backend
-            exit 1
-          fi
+      - name: Verify containers
+        if: always()
+        run: docker ps --filter name=angel-ctrl --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-      - name: Health check via nginx
-        run: |
-          HTTP=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/)
-          echo "HTTP status: $HTTP"
-          [ "$HTTP" = "200" ] || exit 1
-
-      - name: Prune old images
-        run: docker image prune -f --filter "until=24h"
-
-      - name: Notify success
-        if: success()
-        run: echo "Deploy OK - $(date '+%Y-%m-%d %H:%M:%S')"
-
-      - name: Notify failure
-        if: failure()
-        working-directory: ${{ secrets.DEPLOY_PATH }}
-        run: |
-          echo "Deploy FALLO - $(date '+%Y-%m-%d %H:%M:%S')"
-          docker compose ps
-          docker compose logs --tail=50
+      - name: Deploy log
+        if: always()
+        run: tail -20 /home/angel/deploy/deploy.log || true
