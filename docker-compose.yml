@@ -2,6 +2,39 @@ name: angel-ctrl
 
 services:
 
+  # ── Socket proxy (reemplaza acceso directo al Docker daemon) ───────────────
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
+    mem_limit: 32m
+    cpus: 0.05
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Permisos mínimos para Angel Control
+      CONTAINERS: 1   # listar e inspeccionar contenedores
+      IMAGES: 1       # listar imágenes
+      NETWORKS: 1     # listar redes
+      INFO: 1         # resumen del sistema
+      POST: 1         # start / stop / restart (POST requests)
+      EXEC: 0         # bloquear exec — sin acceso shell
+      VOLUMES: 0
+      SERVICES: 0
+      SWARM: 0
+      TASKS: 0
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      DISTRIBUTION: 0
+      NODE: 0
+      PLUGINS: 0
+      SECRETS: 0
+      EVENTS: 0
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+
   # ── Backend API ────────────────────────────────────────────────────────────
   backend:
     restart: unless-stopped
@@ -14,7 +47,8 @@ services:
       - "8080"
     environment:
       APP_ENV: production
-      DOCKER_HOST: unix:///var/run/docker.sock
+      # C-02 corregido: socket-proxy en lugar de acceso directo
+      DOCKER_HOST: tcp://socket-proxy:2375
       CORS_ORIGINS: ${CORS_ORIGINS}
       API_KEY: ${API_KEY}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
@@ -25,13 +59,12 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       SAMBANOVA_API_KEY: ${SAMBANOVA_API_KEY:-}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - claude_data:/claude-data:ro
-    group_add:
-      - "${DOCKER_GID:-999}"
     depends_on:
       redis:
         condition: service_healthy
+      socket-proxy:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:8080/health"]
       interval: 20s
