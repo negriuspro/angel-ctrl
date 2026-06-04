@@ -80,7 +80,7 @@ class InfrastructureView extends StatelessWidget {
           crossAxisCount: isMid ? 3 : 2,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 1.35,
+          childAspectRatio: 0.85,
         ),
         itemCount: containers.length,
         itemBuilder: (_, i) => ServiceCard(container: containers[i]),

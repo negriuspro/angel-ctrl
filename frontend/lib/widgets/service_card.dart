@@ -54,7 +54,7 @@ class ServiceCard extends StatelessWidget {
         : '';
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: surface2,
         borderRadius: BorderRadius.circular(10),
@@ -69,15 +69,15 @@ class ServiceCard extends StatelessWidget {
           // ── Header ──────────────────────────────────────────────────────────
           Row(children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                     color: statusColor.withValues(alpha: 0.2), width: 0.5),
               ),
-              child: Icon(_serviceIcon(container.name), color: statusColor, size: 17),
+              child: Icon(_serviceIcon(container.name), color: statusColor, size: 14),
             ),
             const SizedBox(width: 10),
             Expanded(
