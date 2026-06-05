@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from app.core.auth import require_api_key
 from app.docker_layer.containers import inspect_container, list_containers, perform_action
@@ -14,6 +15,7 @@ from app.schemas.containers import ContainerActionResult, ContainerSummary
 from app.schemas.metrics import ContainerMetrics
 
 router = APIRouter(tags=["containers"])
+_log = logging.getLogger(__name__)
 
 
 @router.get("/containers", response_model=list[ContainerSummary])
@@ -36,7 +38,14 @@ async def get_container(container_id: str) -> dict:
     response_model=ContainerActionResult,
     dependencies=[Depends(require_api_key)],
 )
-async def run_container_action(container_id: str, action: str) -> dict:
+async def run_container_action(
+    container_id: str, action: str, request: Request
+) -> dict:
+    caller_ip = request.client.host if request.client else "unknown"
+    _log.info(
+        "[AUDIT] container_action caller=%s container=%s action=%s",
+        caller_ip, container_id, action,
+    )
     try:
         return await asyncio.to_thread(perform_action, container_id, action)
     except ValueError as exc:
