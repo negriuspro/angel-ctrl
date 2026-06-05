@@ -92,8 +92,8 @@ async def cache_get(key: str) -> Any | None:
         try:
             raw = await redis.get(key)
             return json.loads(raw) if raw else None
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis cache_get failed for key=%r, falling back to memory: %s", key, exc)
     return memory_cache().get(key)
 
 
@@ -103,6 +103,6 @@ async def cache_set(key: str, value: Any, ttl: int = 12) -> None:
         try:
             await redis.setex(key, ttl, json.dumps(value, default=str))
             return
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Redis cache_set failed for key=%r, falling back to memory: %s", key, exc)
     memory_cache().set(key, value, ttl=float(ttl))
