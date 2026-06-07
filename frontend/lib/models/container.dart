@@ -1,6 +1,7 @@
 class ContainerMetrics {
   final String id;
   final String name;
+  final String project;
   final String image;
   final String status;
   final String state;
@@ -19,6 +20,7 @@ class ContainerMetrics {
   ContainerMetrics({
     required this.id,
     required this.name,
+    required this.project,
     required this.image,
     required this.status,
     required this.state,

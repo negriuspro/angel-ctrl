@@ -4,4 +4,4 @@ const int maxEvents = 200;
 const int sparklinePoints = 30;
 const int containerLogMaxLines = 2000;
 
-enum DashboardMode { infrastructure, aiSystems, agents, automations }
+enum DashboardMode { infrastructure, agents, automations }

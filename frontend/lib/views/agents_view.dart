@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../core/api.dart';
 import '../core/theme.dart';
 import '../widgets/panel.dart';
-import '../widgets/sparkline.dart';
 
 class AgentsView extends StatefulWidget {
   final List<dynamic> providers;
@@ -14,20 +13,14 @@ class AgentsView extends StatefulWidget {
   State<AgentsView> createState() => _AgentsViewState();
 }
 
-class _AgentsViewState extends State<AgentsView>
-    with SingleTickerProviderStateMixin {
+class _AgentsViewState extends State<AgentsView> {
   final ApiClient _api = ApiClient();
   Map<String, dynamic>? _claude;
   Timer? _timer;
-  late AnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
     _fetchClaude();
     _timer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchClaude());
   }
@@ -35,7 +28,6 @@ class _AgentsViewState extends State<AgentsView>
   @override
   void dispose() {
     _timer?.cancel();
-    _pulse.dispose();
     super.dispose();
   }
 
@@ -46,23 +38,38 @@ class _AgentsViewState extends State<AgentsView>
     } catch (_) {}
   }
 
+  /// Codex no está activo como agente en este dashboard.
+  List<dynamic> get _gridProviders => widget.providers
+      .where((p) => (p as Map)['provider_id']?.toString() != 'codex')
+      .toList();
+
   @override
   Widget build(BuildContext context) {
+    final gridProviders = _gridProviders;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ClaudeDashboard(claude: _claude, pulse: _pulse),
-          const SizedBox(height: 14),
-          if (widget.providers.isNotEmpty) ...[
-            _sectionLabel('PROVIDERS'),
-            const SizedBox(height: 8),
-            _ProvidersGrid(providers: widget.providers),
-          ],
+          _sectionLabel('PROVIDERS'),
+          const SizedBox(height: 8),
+          _providersSummary(gridProviders),
+          const SizedBox(height: 12),
+          _ProvidersGrid(providers: gridProviders, claude: _claude),
         ],
       ),
     );
+  }
+
+  Widget _providersSummary(List<dynamic> providers) {
+    final configured =
+        providers.where((p) => (p as Map)['health'] != 'not_configured').length;
+    final online = providers.where((p) => (p as Map)['health'] == 'ok').length;
+    return Wrap(spacing: 8, runSpacing: 8, children: [
+      SummaryChip(label: 'TOTAL', value: '${providers.length}', color: cyan),
+      SummaryChip(label: 'ONLINE', value: '$online', color: green),
+      SummaryChip(label: 'CONFIG', value: '$configured', color: yellow),
+    ]);
   }
 
   Widget _sectionLabel(String text) => Text(
@@ -76,436 +83,108 @@ class _AgentsViewState extends State<AgentsView>
       );
 }
 
-// ─── Claude Dashboard Card ──────────────────────────────────────────────────
-
-class _ClaudeDashboard extends StatelessWidget {
-  final Map<String, dynamic>? claude;
-  final AnimationController pulse;
-
-  const _ClaudeDashboard({required this.claude, required this.pulse});
-
-  @override
-  Widget build(BuildContext context) {
-    final hasData = claude?['has_data'] == true;
-    final today = (claude?['today'] as Map?)?.cast<String, dynamic>() ?? {};
-    final sess = (claude?['session'] as Map?)?.cast<String, dynamic>() ?? {};
-    final rawSpark = (claude?['sparkline'] as List?) ?? [];
-    final spark = rawSpark.map((v) => (v as num).toDouble()).toList();
-
-    final todayCost = (today['cost'] as num?)?.toDouble() ?? 0;
-    final todayMsgs = (today['messages'] as int?) ?? 0;
-    final todayTotal = (today['total'] as int?) ?? 0;
-
-    final sessId = sess['id']?.toString() ?? '';
-    final sessModel = sess['model']?.toString() ?? '';
-    final sessInput = (sess['input'] as int?) ?? 0;
-    final sessOutput = (sess['output'] as int?) ?? 0;
-    final sessCacheRead = (sess['cache_read'] as int?) ?? 0;
-    final sessCost = (sess['cost'] as num?)?.toDouble() ?? 0;
-    final sessTotal = (sess['total'] as int?) ?? 0;
-    final todayTotalSafe = todayTotal > 0 ? todayTotal : 1;
-    final sessPct = ((sessTotal / todayTotalSafe) * 100).clamp(0, 100).round();
-
-    final modelShort = _shortModel(sessModel);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF1E2D3D), width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ──
-          _header(hasData),
-
-          // ── Mascot ──
-          _mascot(),
-
-          const Divider(color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
-
-          // ── TODAY ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('TODAY',
-                    style: TextStyle(
-                        color: textDim,
-                        fontSize: 9,
-                        fontFamily: 'monospace',
-                        letterSpacing: 1.5)),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${todayCost.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontFamily: 'monospace',
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${_fmtNum(todayMsgs)} msgs  ·  ${_fmtBig(todayTotal)} tokens',
-                  style: TextStyle(
-                      color: textSecondary,
-                      fontSize: 11,
-                      fontFamily: 'monospace'),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-          const Divider(color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
-
-          // ── SESSION ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Text('SESSION',
-                      style: TextStyle(
-                          color: textDim,
-                          fontSize: 9,
-                          fontFamily: 'monospace',
-                          letterSpacing: 1.5)),
-                  if (sessId.isNotEmpty) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      '· ${sessId.length > 8 ? sessId.substring(0, 8) : sessId}',
-                      style: TextStyle(
-                          color: textDim,
-                          fontSize: 9,
-                          fontFamily: 'monospace'),
-                    ),
-                  ],
-                  const Spacer(),
-                  if (modelShort.isNotEmpty) _modelBadge(modelShort),
-                ]),
-                const SizedBox(height: 10),
-                Row(children: [
-                  _tokenCol('INPUT', sessInput, cyan),
-                  const SizedBox(width: 24),
-                  _tokenCol('OUTPUT', sessOutput, yellow),
-                  const SizedBox(width: 24),
-                  _tokenCol('CACHE RD', sessCacheRead, const Color(0xFF8C6EF5)),
-                ]),
-                const SizedBox(height: 10),
-                Row(children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: LinearProgressIndicator(
-                        value: sessPct / 100,
-                        backgroundColor: border.withValues(alpha: 0.4),
-                        color: cyan.withValues(alpha: 0.6),
-                        minHeight: 3,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '\$${sessCost.toStringAsFixed(2)}',
-                    style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 13,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold),
-                  ),
-                ]),
-                const SizedBox(height: 4),
-                Text(
-                  '$sessPct% of today',
-                  style: TextStyle(
-                      color: textDim, fontSize: 9, fontFamily: 'monospace'),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-          const Divider(color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
-
-          // ── SPARKLINE ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Text('LAST 30 MIN',
-                      style: TextStyle(
-                          color: textDim,
-                          fontSize: 9,
-                          fontFamily: 'monospace',
-                          letterSpacing: 1.5)),
-                  const Spacer(),
-                  AnimatedBuilder(
-                    animation: pulse,
-                    builder: (_, __) => Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: green.withValues(alpha: 0.4 + 0.6 * pulse.value),
-                        boxShadow: [
-                          BoxShadow(
-                              color: green.withValues(
-                                  alpha: 0.3 * pulse.value),
-                              blurRadius: 6)
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text('LIVE',
-                      style: TextStyle(
-                          color: green,
-                          fontSize: 8,
-                          fontFamily: 'monospace',
-                          letterSpacing: 1)),
-                ]),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 48,
-                  child: CustomPaint(
-                    painter: SparklinePainter(
-                      values: spark.isEmpty ? List.filled(30, 0.0) : spark,
-                      color: red,
-                      fillColor: red.withValues(alpha: 0.12),
-                    ),
-                    size: const Size(double.infinity, 48),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _header(bool live) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-      child: Row(children: [
-        AnimatedBuilder(
-          animation: pulse,
-          builder: (_, __) => Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: live
-                  ? red.withValues(alpha: 0.7 + 0.3 * pulse.value)
-                  : textDim,
-              boxShadow: live
-                  ? [BoxShadow(color: red.withValues(alpha: 0.4), blurRadius: 6)]
-                  : null,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text('CLAUDE',
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontFamily: 'monospace',
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1)),
-        const Spacer(),
-        Text(
-          _timeNow(),
-          style: TextStyle(
-              color: textSecondary,
-              fontSize: 11,
-              fontFamily: 'monospace'),
-        ),
-      ]),
-    );
-  }
-
-  Widget _mascot() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: Column(children: [
-          CustomPaint(
-            painter: _ClawdPainter(),
-            size: const Size(48, 40),
-          ),
-          const SizedBox(height: 6),
-          Text('clawd · watching your tokens',
-              style: TextStyle(
-                  color: textDim,
-                  fontSize: 9,
-                  fontFamily: 'monospace',
-                  letterSpacing: 0.5)),
-        ]),
-      ),
-    );
-  }
-
-  Widget _tokenCol(String label, int value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                color: textDim, fontSize: 8, fontFamily: 'monospace')),
-        const SizedBox(height: 2),
-        Text(_fmtBig(value),
-            style: TextStyle(
-                color: color,
-                fontSize: 16,
-                fontFamily: 'monospace',
-                fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _modelBadge(String model) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3),
-        color: const Color(0xFF8C6EF5).withValues(alpha: 0.12),
-        border: Border.all(
-            color: const Color(0xFF8C6EF5).withValues(alpha: 0.35), width: 0.5),
-      ),
-      child: Text(model,
-          style: const TextStyle(
-              color: Color(0xFF8C6EF5),
-              fontSize: 9,
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.bold)),
-    );
-  }
-
-  static String _shortModel(String m) {
-    if (m.isEmpty) return '';
-    final lower = m.toLowerCase();
-    if (lower.contains('opus')) {
-      final match = RegExp(r'opus[-\s]?(\d+[-\.]?\d*)').firstMatch(lower);
-      return match != null ? 'opus-${match.group(1)}' : 'opus';
-    }
-    if (lower.contains('sonnet')) {
-      final match = RegExp(r'sonnet[-\s]?(\d+[-\.]?\d*)').firstMatch(lower);
-      return match != null ? 'sonnet-${match.group(1)}' : 'sonnet';
-    }
-    if (lower.contains('haiku')) return 'haiku';
-    return m.length > 12 ? m.substring(0, 12) : m;
-  }
-
-  static String _fmtBig(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(2)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
-
-  static String _fmtNum(int n) {
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '$n';
-  }
-
-  static String _timeNow() {
-    final now = DateTime.now();
-    final h = now.hour.toString().padLeft(2, '0');
-    final m = now.minute.toString().padLeft(2, '0');
-    final s = now.second.toString().padLeft(2, '0');
-    return '$h:$m:$s';
-  }
-}
-
-// ─── Clawd Pixel Art ────────────────────────────────────────────────────────
-
-class _ClawdPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const grid = [
-      '00111100',
-      '01111110',
-      '11011011',
-      '11111111',
-      '01111110',
-      '00100100',
-      '01011010',
-      '10000001',
-    ];
-    final pw = size.width / grid[0].length;
-    final ph = size.height / grid.length;
-    final paint = Paint()..color = const Color(0xFFE53935);
-
-    for (var r = 0; r < grid.length; r++) {
-      for (var c = 0; c < grid[r].length; c++) {
-        if (grid[r][c] == '1') {
-          canvas.drawRect(
-            Rect.fromLTWH(c * pw, r * ph, pw - 1, ph - 1),
-            paint,
-          );
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter old) => false;
-}
-
-// ─── Providers List ──────────────────────────────────────────────────────────
+// ─── Providers Grid ──────────────────────────────────────────────────────────
 
 class _ProvidersGrid extends StatelessWidget {
   final List<dynamic> providers;
-  const _ProvidersGrid({required this.providers});
+  final Map<String, dynamic>? claude;
+  const _ProvidersGrid({required this.providers, required this.claude});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: providers
-          .map((p) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _ProviderCard(p: p as Map<String, dynamic>),
-              ))
-          .toList(),
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      const minCardWidth = 360.0;
+      const spacing = 12.0;
+      final columns =
+          (constraints.maxWidth / (minCardWidth + spacing)).floor().clamp(1, 3);
+      final cardWidth =
+          (constraints.maxWidth - spacing * (columns - 1)) / columns;
+      return Wrap(
+        spacing: spacing,
+        runSpacing: spacing,
+        children: providers.map((p) {
+          final pm = (p as Map).cast<String, dynamic>();
+          final isClaude = pm['provider_id']?.toString() == 'claude';
+          return SizedBox(
+            width: cardWidth,
+            child: _ProviderCard(p: pm, claudeExtra: isClaude ? claude : null),
+          );
+        }).toList(),
+      );
+    });
   }
 }
 
+/// Tarjeta de proveedor estilo "mini dashboard": cifras grandes, jerarquía
+/// visual clara y solo datos reales que expone el backend (sin información
+/// técnica cruda). Cuando el proveedor es Claude, complementa las métricas
+/// genéricas con los datos reales de /api/ai/claude/metrics (costo de hoy,
+/// tokens de cache).
 class _ProviderCard extends StatelessWidget {
   final Map<String, dynamic> p;
-  const _ProviderCard({required this.p});
+  final Map<String, dynamic>? claudeExtra;
+  const _ProviderCard({required this.p, this.claudeExtra});
+
+  /// Logo real (asset/logos/) y color de acento de cada proveedor.
+  static (String, Color) _visual(String providerId) => switch (providerId) {
+        'claude' => ('asset/logos/claude.png', Color(0xFFD9774F)),
+        'gemini' => ('asset/logos/geminis.jpeg', Color(0xFF4285F4)),
+        'openrouter' => ('asset/logos/openrouter.jpeg', Color(0xFF94A3B8)),
+        'groq' => ('asset/logos/groq.png', Color(0xFFF0563A)),
+        'cerebras' => ('asset/logos/cerebras.png', Color(0xFFE8531D)),
+        'sambanova' => ('asset/logos/sambanova.webp', Color(0xFF6D4AAE)),
+        _ => ('', textSecondary),
+      };
 
   @override
   Widget build(BuildContext context) {
+    final providerId = p['provider_id']?.toString() ?? '';
+    final label = p['label']?.toString() ?? providerId;
     final health = p['health']?.toString() ?? 'unknown';
     final m = (p['metrics'] as Map?)?.cast<String, dynamic>() ?? {};
     final models = (p['models'] as List?) ?? [];
-    final caps = (p['capabilities'] as List?) ?? [];
-    final events = (p['events'] as List?) ?? [];
-    final tokIn = (m['token_input'] as int?) ?? 0;
-    final tokOut = (m['token_output'] as int?) ?? 0;
-    final reqs = (m['request_count'] as int?) ?? 0;
-    final latency = (m['latency_ms'] as num?)?.toDouble();
 
+    final bool isClaude = providerId == 'claude';
+    final bool isOpenRouter = providerId == 'openrouter';
+    final claudeToday =
+        (claudeExtra?['today'] as Map?)?.cast<String, dynamic>();
+    final claudeSession =
+        (claudeExtra?['session'] as Map?)?.cast<String, dynamic>();
+
+    // El polling dedicado (claudeExtra) puede no haber resuelto aún o fallar;
+    // se usa metrics del backend (m) como respaldo para no mostrar "—" vacíos.
+    final todayCost = (claudeToday?['cost'] as num?)?.toDouble() ??
+        (m['cost_today'] as num?)?.toDouble();
+    // OpenRouter no reporta gasto "de hoy" sino consumo acumulado real vía
+    // /v1/credits — se muestra como cifra principal en lugar de "Today Cost".
+    final costTotal = (m['cost_total'] as num?)?.toDouble();
+    final creditsLeft = (m['credits_remaining'] as num?)?.toDouble();
+    // null = el proveedor no expone uso real (no hardcodeamos "0", que se
+    // vería como consumo real); solo Claude (sesiones locales) lo reporta hoy.
+    final tokIn =
+        (claudeSession?['input'] as int?) ?? (m['token_input'] as int?);
+    final tokOut =
+        (claudeSession?['output'] as int?) ?? (m['token_output'] as int?);
+    final cacheTokens =
+        (claudeSession?['cache_read'] as int?) ?? (m['cache_read'] as int?);
+    final latency = (m['latency_ms'] as num?)?.toDouble();
+    final msgsToday =
+        (claudeToday?['messages'] as int?) ?? (m['request_count'] as int?);
+
+    final (_, accent) = _visual(providerId);
     final (statusColor, statusLabel) = switch (health) {
       'ok' => (green, 'ONLINE'),
-      'not_configured' => (textDim, 'NO CONFIG'),
+      'not_configured' => (textDim, 'OFFLINE'),
       'error' => (red, 'ERROR'),
       _ => (yellow, health.toUpperCase()),
     };
-
     final bool configured = health != 'not_configured';
 
     return Container(
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: statusColor.withValues(alpha: 0.2), width: 0.5),
+        border: Border.all(color: accent.withValues(alpha: 0.18), width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,29 +193,21 @@ class _ProviderCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             child: Row(children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: statusColor,
-                  boxShadow: health == 'ok'
-                      ? [BoxShadow(color: statusColor.withValues(alpha: 0.5), blurRadius: 6)]
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 8),
+              _logo(providerId),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  p['label']?.toString() ?? p['provider_id']?.toString() ?? '—',
+                  label,
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               badge(statusLabel, statusColor),
             ]),
           ),
@@ -551,153 +222,275 @@ class _ProviderCard extends StatelessWidget {
                 children: [
                   Text('API key no configurada',
                       style: TextStyle(
-                          color: textDim, fontSize: 11, fontFamily: 'monospace')),
+                          color: textDim,
+                          fontSize: 11,
+                          fontFamily: 'monospace')),
                   const SizedBox(height: 4),
-                  Text('Agrega la key en el archivo .env y reinicia el backend.',
+                  Text(
+                      'Agrega la key en el archivo .env y reinicia el backend.',
                       style: TextStyle(
-                          color: textDim, fontSize: 9, fontFamily: 'monospace')),
+                          color: textDim,
+                          fontSize: 9,
+                          fontFamily: 'monospace')),
                 ],
               ),
             )
           else ...[
-            // ── Token stats ──
+            // ── Cifra destacada: costo de hoy ──
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-              child: Row(children: [
-                _tokenCol('INPUT', tokIn, cyan),
-                const SizedBox(width: 28),
-                _tokenCol('OUTPUT', tokOut, yellow),
-                const SizedBox(width: 28),
-                _tokenCol('REQUESTS', reqs, green),
-                if (latency != null) ...[
-                  const SizedBox(width: 28),
-                  _tokenColStr('LATENCY', '${latency.toStringAsFixed(0)}ms', red),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(isOpenRouter ? 'TOTAL USAGE' : 'TODAY COST',
+                      style: TextStyle(
+                          color: textDim,
+                          fontSize: 9,
+                          fontFamily: 'monospace',
+                          letterSpacing: 1.5)),
+                  const SizedBox(height: 4),
+                  Text(
+                    () {
+                      final value = isOpenRouter ? costTotal : todayCost;
+                      return value != null
+                          ? '\$${value.toStringAsFixed(2)}'
+                          : '—';
+                    }(),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isOpenRouter && creditsLeft != null
+                        ? 'crédito restante: \$${creditsLeft.toStringAsFixed(2)}'
+                        : (tokIn != null && tokOut != null
+                            ? '${_fmtBig(tokIn + tokOut)} tokens totales'
+                            : 'uso no rastreado'),
+                    style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 10,
+                        fontFamily: 'monospace'),
+                  ),
                 ],
-              ]),
+              ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
-            // ── Token bars ──
+            // ── Grilla 2x2: input / output / cache / latencia ──
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
               child: Column(children: [
                 Row(children: [
-                  Expanded(child: tokenBar('IN', tokIn, tokIn + tokOut, cyan)),
+                  Expanded(
+                      child: _metricTile(
+                          'INPUT', tokIn != null ? _fmtBig(tokIn) : '—', cyan)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: _metricTile('OUTPUT',
+                          tokOut != null ? _fmtBig(tokOut) : '—', yellow)),
                 ]),
-                const SizedBox(height: 3),
+                const SizedBox(height: 8),
                 Row(children: [
-                  Expanded(child: tokenBar('OUT', tokOut, tokIn + tokOut, yellow)),
+                  Expanded(
+                      child: _metricTile(
+                          'CACHE',
+                          cacheTokens != null ? _fmtBig(cacheTokens) : '—',
+                          const Color(0xFF8C6EF5))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: isClaude
+                          // Claude corre vía plan Pro (sesiones locales), no
+                          // hay latencia de API que medir; se muestra en su
+                          // lugar la actividad real del día.
+                          ? _metricTile('MSGS TODAY',
+                              msgsToday != null ? _fmtBig(msgsToday) : '—', red)
+                          : _metricTile(
+                              'LATENCY',
+                              latency != null
+                                  ? '${latency.toStringAsFixed(0)}ms'
+                                  : '—',
+                              red)),
                 ]),
               ]),
             ),
 
-            // ── Models ──
+            // ── Acceso a la lista completa de modelos ──
             if (models.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              const Divider(color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('MODELS',
-                        style: TextStyle(
-                            color: textDim,
-                            fontSize: 8,
-                            fontFamily: 'monospace',
-                            letterSpacing: 1.5)),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: models.take(6).map((m) => tag(m.toString(), cyan)).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            // ── Capabilities ──
-            if (caps.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: caps.take(4).map((c) => tag(c.toString(), textSecondary)).toList(),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () =>
+                        _showModelsSheet(context, label, models, accent),
+                    style: TextButton.styleFrom(
+                      foregroundColor: accent,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        side: BorderSide(
+                            color: accent.withValues(alpha: 0.3), width: 0.5),
+                      ),
+                    ),
+                    icon: const Icon(Icons.view_list_rounded, size: 14),
+                    label: Text(
+                      'VIEW MODELS · ${models.length}',
+                      style: const TextStyle(
+                          fontSize: 10,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5),
+                    ),
+                  ),
                 ),
               ),
             ],
 
-            // ── Events ──
-            if (events.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              const Divider(color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('EVENTS',
-                        style: TextStyle(
-                            color: textDim,
-                            fontSize: 8,
-                            fontFamily: 'monospace',
-                            letterSpacing: 1.5)),
-                    const SizedBox(height: 4),
-                    ...events.take(3).map((e) {
-                      final ev = (e as Map).cast<String, dynamic>();
-                      return Text(
-                        '› ${ev['type'] ?? 'event'}: ${ev['message'] ?? ''}',
-                        style: TextStyle(
-                            color: textDim, fontSize: 8, fontFamily: 'monospace'),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
           ],
         ],
       ),
     );
   }
 
-  Widget _tokenCol(String label, int value, Color color) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: TextStyle(
-                  color: textDim, fontSize: 8, fontFamily: 'monospace')),
-          const SizedBox(height: 2),
-          Text(_fmtBig(value),
-              style: TextStyle(
-                  color: color,
-                  fontSize: 15,
-                  fontFamily: 'monospace',
-                  fontWeight: FontWeight.bold)),
-        ],
-      );
+  /// Insignia con el logo real del proveedor de IA.
+  Widget _logo(String providerId) {
+    final (asset, color) = _visual(providerId);
+    return Container(
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 0.5),
+      ),
+      child: asset.isNotEmpty
+          ? Padding(
+              padding: const EdgeInsets.all(5),
+              child: Image.asset(asset, fit: BoxFit.contain),
+            )
+          : Icon(Icons.smart_toy_rounded, color: color, size: 15),
+    );
+  }
 
-  Widget _tokenColStr(String label, String value, Color color) => Column(
+  /// Tile rectangular con borde para una métrica individual.
+  Widget _metricTile(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: surface2,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border, width: 0.5),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                  color: textDim, fontSize: 8, fontFamily: 'monospace')),
-          const SizedBox(height: 2),
           Text(value,
               style: TextStyle(
                   color: color,
-                  fontSize: 15,
+                  fontSize: 17,
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: TextStyle(
+                  color: textDim,
+                  fontSize: 8,
+                  fontFamily: 'monospace',
+                  letterSpacing: 0.8)),
         ],
-      );
+      ),
+    );
+  }
+
+  /// Bottom sheet con la lista completa de modelos, mostrando solo el
+  /// nombre amigable (nunca el objeto JSON crudo).
+  void _showModelsSheet(
+      BuildContext context, String label, List<dynamic> models, Color accent) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      ),
+      builder: (_) => ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 480),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+              child: Row(children: [
+                Expanded(
+                  child: Text(
+                    '$label  ·  ${models.length} modelos',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Cerrar',
+                  icon: const Icon(Icons.close_rounded,
+                      size: 16, color: textSecondary),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ]),
+            ),
+            const Divider(color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                itemCount: models.length,
+                separatorBuilder: (_, __) => const Divider(
+                    color: Color(0xFF1E2D3D), height: 1, thickness: 0.5),
+                itemBuilder: (_, i) => Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(children: [
+                    Icon(Icons.psychology_alt_rounded, size: 14, color: accent),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _modelName(models[i]),
+                        style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 12,
+                            fontFamily: 'monospace'),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Extrae un nombre amigable de un modelo, sin importar si el backend
+  /// lo entrega como string o como objeto {id, name}.
+  static String _modelName(dynamic model) {
+    if (model is Map) {
+      final name = model['name'] ?? model['id'];
+      return name?.toString() ?? '—';
+    }
+    return model.toString();
+  }
 
   static String _fmtBig(int n) {
     if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(2)}M';

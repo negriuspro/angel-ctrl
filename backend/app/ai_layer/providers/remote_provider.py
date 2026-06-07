@@ -31,7 +31,9 @@ class RemoteProvider(BaseProvider):
 
     def _start_background_refresh(self) -> None:
         self._refresh_thread = threading.Thread(
-            target=self._background_loop, daemon=True, name=f"refresh-{self.provider_id}"
+            target=self._background_loop,
+            daemon=True,
+            name=f"refresh-{self.provider_id}",
         )
         self._refresh_thread.start()
 
@@ -84,8 +86,7 @@ class RemoteProvider(BaseProvider):
     def parse_models(self, data: dict) -> list[dict[str, Any]]:
         raw = data.get("data") or []
         return [
-            {"id": m.get("id"), "name": m.get("name") or m.get("id")}
-            for m in raw[:20]
+            {"id": m.get("id"), "name": m.get("name") or m.get("id")} for m in raw[:20]
         ]
 
     def list_models(self) -> list[dict[str, Any]]:
@@ -103,8 +104,11 @@ class RemoteProvider(BaseProvider):
                 "status": self._status,
                 "latency_ms": self._latency_ms,
                 "request_count": self._request_count,
-                "token_input": 0,
-                "token_output": 0,
+                # Ninguno de estos proveedores expone uso real por API key sin
+                # proxyear el tráfico de chat; reportar None (no "0") para que
+                # el frontend distinga "no se rastrea" de "consumo real cero".
+                "token_input": None,
+                "token_output": None,
                 "capabilities": ["chat"],
             }
 

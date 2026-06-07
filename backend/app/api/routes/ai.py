@@ -28,13 +28,13 @@ if _settings.sambanova_api_key:
     _PROVIDERS.append(SambaNovaProvider(_settings.sambanova_api_key))
 
 _KNOWN = [
-    {"id": "claude",     "type": "hosted", "label": "Claude (Antigravity)"},
-    {"id": "codex",      "type": "hosted", "label": "Codex (OpenAI)"},
-    {"id": "gemini",     "type": "hosted", "label": "Gemini (Google)"},
-    {"id": "groq",       "type": "hosted", "label": "Groq"},
-    {"id": "cerebras",   "type": "hosted", "label": "Cerebras"},
+    {"id": "claude", "type": "hosted", "label": "Claude (Antigravity)"},
+    {"id": "codex", "type": "hosted", "label": "Codex (OpenAI)"},
+    {"id": "gemini", "type": "hosted", "label": "Gemini (Google)"},
+    {"id": "groq", "type": "hosted", "label": "Groq"},
+    {"id": "cerebras", "type": "hosted", "label": "Cerebras"},
     {"id": "openrouter", "type": "hosted", "label": "OpenRouter"},
-    {"id": "sambanova",  "type": "hosted", "label": "SambaNova"},
+    {"id": "sambanova", "type": "hosted", "label": "SambaNova"},
 ]
 
 
@@ -46,39 +46,84 @@ async def get_ai_providers() -> list[dict]:
         try:
             telemetry = p.get_telemetry()
             status = p.get_status()
-            label = next((k["label"] for k in _KNOWN if k["id"] == p.provider_id), p.provider_id)
-            results.append({
-                "provider_id": p.provider_id,
-                "provider_type": p.provider_type,
-                "label": label,
-                "health": status.get("status", "unknown"),
-                "models": p.list_models(),
-                "capabilities": telemetry.get("capabilities", []),
-                "metrics": {
-                    "latency_ms": telemetry.get("latency_ms"),
-                    "request_count": telemetry.get("request_count"),
-                    "token_input": telemetry.get("token_input"),
-                    "token_output": telemetry.get("token_output"),
-                },
-                "events": p.get_events()[-5:],
-            })
+            label = next(
+                (k["label"] for k in _KNOWN if k["id"] == p.provider_id), p.provider_id
+            )
+            results.append(
+                {
+                    "provider_id": p.provider_id,
+                    "provider_type": p.provider_type,
+                    "label": label,
+                    "health": status.get("status", "unknown"),
+                    "models": p.list_models(),
+                    "capabilities": telemetry.get("capabilities", []),
+                    "metrics": {
+                        "latency_ms": telemetry.get("latency_ms"),
+                        "request_count": telemetry.get("request_count"),
+                        "token_input": telemetry.get("token_input"),
+                        "token_output": telemetry.get("token_output"),
+                        "cost_total": telemetry.get("cost_total"),
+                        "credits_remaining": telemetry.get("credits_remaining"),
+                    },
+                    "events": p.get_events()[-5:],
+                }
+            )
         except Exception as exc:
-            results.append({
-                "provider_id": p.provider_id,
-                "provider_type": getattr(p, "provider_type", "unknown"),
-                "label": p.provider_id,
-                "health": "error",
-                "error": str(exc),
-                "models": [],
-                "capabilities": [],
-                "metrics": {},
-                "events": [],
-            })
+            results.append(
+                {
+                    "provider_id": p.provider_id,
+                    "provider_type": getattr(p, "provider_type", "unknown"),
+                    "label": p.provider_id,
+                    "health": "error",
+                    "error": str(exc),
+                    "models": [],
+                    "capabilities": [],
+                    "metrics": {},
+                    "events": [],
+                }
+            )
 
     configured_ids = {p.provider_id for p in _PROVIDERS}
     for known in _KNOWN:
-        if known["id"] not in configured_ids:
-            results.append({
+        if known["id"] in configured_ids:
+            continue
+
+        if known["id"] == "claude":
+            # Claude se usa vía plan Pro (sesiones locales de Antigravity/Claude
+            # Code), no con una API key — su estado depende de si hay datos de
+            # sesión reales, no de una credencial configurada.
+            try:
+                snap = collect_claude_metrics()
+                sess = snap.session or {}
+                today = snap.today or {}
+                health = "ok" if snap.has_data else "not_configured"
+                metrics = {
+                    "latency_ms": None,
+                    "request_count": today.get("messages"),
+                    "token_input": sess.get("input"),
+                    "token_output": sess.get("output"),
+                    "cache_read": sess.get("cache_read"),
+                    "cost_today": today.get("cost"),
+                }
+            except Exception:
+                health = "error"
+                metrics = {}
+            results.append(
+                {
+                    "provider_id": "claude",
+                    "provider_type": known["type"],
+                    "label": known["label"],
+                    "health": health,
+                    "models": [],
+                    "capabilities": [],
+                    "metrics": metrics,
+                    "events": [],
+                }
+            )
+            continue
+
+        results.append(
+            {
                 "provider_id": known["id"],
                 "provider_type": known["type"],
                 "label": known["label"],
@@ -87,7 +132,8 @@ async def get_ai_providers() -> list[dict]:
                 "capabilities": [],
                 "metrics": {},
                 "events": [],
-            })
+            }
+        )
 
     return results
 
@@ -95,6 +141,7 @@ async def get_ai_providers() -> list[dict]:
 @router.get("/ai/claude/metrics")
 async def get_claude_metrics() -> dict:
     from app.ai_layer.claude_collector import collect as collect_claude_metrics
+
     s = collect_claude_metrics()
     return {
         "has_data": s.has_data,

@@ -20,7 +20,10 @@ _log = logging.getLogger(__name__)
 
 @router.get("/containers", response_model=list[ContainerSummary])
 async def get_containers() -> list[dict]:
-    return await asyncio.to_thread(list_containers)
+    try:
+        return await asyncio.to_thread(list_containers)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Docker unavailable: {exc}") from exc
 
 
 @router.get("/containers/{container_id}")

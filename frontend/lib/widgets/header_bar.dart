@@ -18,9 +18,9 @@ class AppNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.of(context).size.width < 900;
-    final hostname   = hostStats['hostname']?.toString() ?? '—';
+    final hostname = hostStats['hostname']?.toString() ?? '—';
     final containers = (hostStats['containers_running'] ?? 0) as int;
-    final lanIp      = hostStats['lan_ip']?.toString() ?? '—';
+    final lanIp = hostStats['lan_ip']?.toString() ?? '—';
 
     return Container(
       width: compact ? 68 : 220,
@@ -40,14 +40,6 @@ class AppNav extends StatelessWidget {
             current: mode,
             compact: compact,
             onTap: () => onModeChanged(DashboardMode.infrastructure),
-          ),
-          _NavItem(
-            icon: Icons.psychology_rounded,
-            label: 'Sistemas IA',
-            mode: DashboardMode.aiSystems,
-            current: mode,
-            compact: compact,
-            onTap: () => onModeChanged(DashboardMode.aiSystems),
           ),
           _NavItem(
             icon: Icons.account_tree_rounded,
@@ -98,7 +90,9 @@ class _Logo extends StatelessWidget {
               Icons.hub_rounded,
               color: blue,
               size: 24,
-              shadows: [Shadow(color: blue.withValues(alpha: 0.7), blurRadius: 14)],
+              shadows: [
+                Shadow(color: blue.withValues(alpha: 0.7), blurRadius: 14)
+              ],
             )
           : Row(children: [
               Container(
@@ -114,7 +108,8 @@ class _Logo extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(9),
-                  border: Border.all(color: blue.withValues(alpha: 0.35), width: 0.5),
+                  border: Border.all(
+                      color: blue.withValues(alpha: 0.35), width: 0.5),
                 ),
                 child: const Icon(Icons.hub_rounded, color: blue, size: 18),
               ),
@@ -134,7 +129,8 @@ class _Logo extends StatelessWidget {
                   ),
                   Text(
                     'control center',
-                    style: TextStyle(color: textDim, fontSize: 9, letterSpacing: 0.4),
+                    style: TextStyle(
+                        color: textDim, fontSize: 9, letterSpacing: 0.4),
                   ),
                 ],
               ),
@@ -183,10 +179,13 @@ class _NavItem extends StatelessWidget {
               vertical: 11,
             ),
             decoration: BoxDecoration(
-              color: selected ? blue.withValues(alpha: 0.1) : Colors.transparent,
+              color:
+                  selected ? blue.withValues(alpha: 0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: selected ? blue.withValues(alpha: 0.25) : Colors.transparent,
+                color: selected
+                    ? blue.withValues(alpha: 0.25)
+                    : Colors.transparent,
                 width: 0.5,
               ),
             ),
@@ -295,7 +294,9 @@ class _HostStatus extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: green,
-          boxShadow: [BoxShadow(color: green.withValues(alpha: 0.5), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(color: green.withValues(alpha: 0.5), blurRadius: 6)
+          ],
         ),
       );
 }

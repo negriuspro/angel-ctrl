@@ -13,9 +13,27 @@ CLAUDE_HOME = Path(os.environ.get("CLAUDE_CONFIG_DIR", str(Path.home() / ".claud
 
 
 PRICING = {
-    "opus":   {"in": 15.0, "out": 75.0, "cache_read": 1.50, "cache_w_5m": 18.75, "cache_w_1h": 30.0},
-    "sonnet": {"in":  3.0, "out": 15.0, "cache_read": 0.30, "cache_w_5m":  3.75, "cache_w_1h":  6.0},
-    "haiku":  {"in":  1.0, "out":  5.0, "cache_read": 0.10, "cache_w_5m":  1.25, "cache_w_1h":  2.0},
+    "opus": {
+        "in": 15.0,
+        "out": 75.0,
+        "cache_read": 1.50,
+        "cache_w_5m": 18.75,
+        "cache_w_1h": 30.0,
+    },
+    "sonnet": {
+        "in": 3.0,
+        "out": 15.0,
+        "cache_read": 0.30,
+        "cache_w_5m": 3.75,
+        "cache_w_1h": 6.0,
+    },
+    "haiku": {
+        "in": 1.0,
+        "out": 5.0,
+        "cache_read": 0.10,
+        "cache_w_5m": 1.25,
+        "cache_w_1h": 2.0,
+    },
 }
 
 
@@ -23,9 +41,12 @@ def _model_family(model_id: Optional[str]) -> str:
     if not model_id:
         return "opus"
     m = model_id.lower()
-    if "opus" in m: return "opus"
-    if "sonnet" in m: return "sonnet"
-    if "haiku" in m: return "haiku"
+    if "opus" in m:
+        return "opus"
+    if "sonnet" in m:
+        return "sonnet"
+    if "haiku" in m:
+        return "haiku"
     return "opus"
 
 
@@ -35,8 +56,8 @@ def _estimate_cost(usage: dict, model: Optional[str]) -> float:
     c5m = cache.get("ephemeral_5m_input_tokens", 0)
     c1h = cache.get("ephemeral_1h_input_tokens", 0)
     return (
-        usage.get("input_tokens", 0)            * p["in"]         / 1_000_000
-        + usage.get("output_tokens", 0)         * p["out"]        / 1_000_000
+        usage.get("input_tokens", 0) * p["in"] / 1_000_000
+        + usage.get("output_tokens", 0) * p["out"] / 1_000_000
         + usage.get("cache_read_input_tokens", 0) * p["cache_read"] / 1_000_000
         + c5m * p["cache_w_5m"] / 1_000_000
         + c1h * p["cache_w_1h"] / 1_000_000
@@ -54,7 +75,7 @@ class Snapshot:
 def _parse_jsonl(path: str) -> list[dict]:
     records = []
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8", errors="replace") as f:
             for line in f:
                 try:
                     d = json.loads(line)
@@ -68,15 +89,19 @@ def _parse_jsonl(path: str) -> list[dict]:
                     continue
                 ts_str = d.get("timestamp") or ""
                 try:
-                    ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).timestamp()
+                    ts = datetime.fromisoformat(
+                        ts_str.replace("Z", "+00:00")
+                    ).timestamp()
                 except ValueError:
                     ts = 0.0
-                records.append({
-                    "ts": ts,
-                    "session": d.get("sessionId"),
-                    "model": msg.get("model"),
-                    "usage": usage,
-                })
+                records.append(
+                    {
+                        "ts": ts,
+                        "session": d.get("sessionId"),
+                        "model": msg.get("model"),
+                        "usage": usage,
+                    }
+                )
     except (FileNotFoundError, OSError):
         pass
     return records
@@ -91,7 +116,9 @@ def collect() -> Snapshot:
 
     now = datetime.now(timezone.utc)
     now_epoch = now.timestamp()
-    today_start = datetime(now.year, now.month, now.day, tzinfo=timezone.utc).timestamp()
+    today_start = datetime(
+        now.year, now.month, now.day, tzinfo=timezone.utc
+    ).timestamp()
 
     paths = glob.glob(str(projects_dir / "**" / "*.jsonl"), recursive=True)
     if not paths and not history_file.is_file():
@@ -112,11 +139,27 @@ def collect() -> Snapshot:
             latest_mtime = mt
             latest_path = p
 
-    sess = {"id": None, "model": None, "tier": None,
-            "input": 0, "output": 0, "cache_read": 0, "cache_write": 0,
-            "total": 0, "cost": 0.0, "last_mtime": latest_mtime}
-    today = {"input": 0, "output": 0, "cache_read": 0, "cache_write": 0,
-             "total": 0, "cost": 0.0, "messages": 0}
+    sess = {
+        "id": None,
+        "model": None,
+        "tier": None,
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0,
+        "total": 0,
+        "cost": 0.0,
+        "last_mtime": latest_mtime,
+    }
+    today = {
+        "input": 0,
+        "output": 0,
+        "cache_read": 0,
+        "cache_write": 0,
+        "total": 0,
+        "cost": 0.0,
+        "messages": 0,
+    }
     sparkline = [0] * 30
     spark_window = 30 * 60
 
@@ -131,23 +174,26 @@ def collect() -> Snapshot:
             cost = _estimate_cost(u, r["model"])
 
             if path == latest_path:
-                sess["input"]    += inp
-                sess["output"]   += outp
+                sess["input"] += inp
+                sess["output"] += outp
                 sess["cache_read"] += cr
                 sess["cache_write"] += cw
-                sess["total"]    += total
-                sess["cost"]     += cost
-                if r["model"]: sess["model"] = r["model"]
-                if u.get("service_tier"): sess["tier"] = u["service_tier"]
-                if r["session"]: sess["id"] = r["session"]
+                sess["total"] += total
+                sess["cost"] += cost
+                if r["model"]:
+                    sess["model"] = r["model"]
+                if u.get("service_tier"):
+                    sess["tier"] = u["service_tier"]
+                if r["session"]:
+                    sess["id"] = r["session"]
 
             if r["ts"] >= today_start:
-                today["input"]    += inp
-                today["output"]   += outp
+                today["input"] += inp
+                today["output"] += outp
                 today["cache_read"] += cr
                 today["cache_write"] += cw
-                today["total"]    += total
-                today["cost"]     += cost
+                today["total"] += total
+                today["cost"] += cost
                 today["messages"] += 1
 
             delta = now_epoch - r["ts"]

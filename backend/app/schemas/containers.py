@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class ContainerSummary(BaseModel):
     id: str
     name: str
+    project: str
     image: str
     status: str
     state: str | None = None
@@ -16,4 +17,3 @@ class ContainerActionResult(BaseModel):
     id: str
     action: str
     status: str
-

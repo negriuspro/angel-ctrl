@@ -20,16 +20,26 @@ def _uptime_seconds(container: Container) -> int | None:
         return None
 
 
+def _project_name(container: Container, name: str) -> str:
+    labels = container.attrs.get("Config", {}).get("Labels") or {}
+    project = labels.get("com.docker.compose.project")
+    if project:
+        return project
+    return name.split("-")[0].split("_")[0]
+
+
 def list_containers() -> list[dict[str, Any]]:
     client = get_docker_client()
     containers = client.containers.list(all=True)
     results: list[dict[str, Any]] = []
     for container in containers:
         attrs = container.attrs
+        name = (attrs.get("Name") or container.name).lstrip("/")
         results.append(
             {
                 "id": container.id[:12],
-                "name": (attrs.get("Name") or container.name).lstrip("/"),
+                "name": name,
+                "project": _project_name(container, name),
                 "image": attrs.get("Config", {}).get("Image", ""),
                 "status": attrs.get("State", {}).get("Status", container.status),
                 "state": attrs.get("State", {}).get("Status"),
@@ -57,4 +67,3 @@ def perform_action(container_id: str, action: str) -> dict[str, Any]:
     elif action == "restart":
         container.restart()
     return {"id": container.id[:12], "action": action, "status": "ok"}
-

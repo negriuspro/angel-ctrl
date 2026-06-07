@@ -6,7 +6,6 @@ import 'core/api.dart';
 import 'core/config.dart';
 import 'core/theme.dart';
 import 'views/infrastructure_view.dart';
-import 'views/ai_view.dart';
 import 'views/agents_view.dart';
 import 'views/automations_view.dart';
 import 'models/container.dart';
@@ -69,7 +68,8 @@ class _DashboardShellState extends State<DashboardShell> {
   void _addEvent(String text, {String type = 'info'}) {
     setState(() {
       _events.insert(0, Event(time: DateTime.now(), text: text, type: type));
-      if (_events.length > maxEvents) _events.removeRange(maxEvents, _events.length);
+      if (_events.length > maxEvents)
+        _events.removeRange(maxEvents, _events.length);
     });
   }
 
@@ -88,10 +88,10 @@ class _DashboardShellState extends State<DashboardShell> {
         _api.getJson('/api/ai/providers'),
       ]);
 
-      final host         = results[0] as Map<String, dynamic>;
-      final system       = results[1] as Map<String, dynamic>;
+      final host = results[0] as Map<String, dynamic>;
+      final system = results[1] as Map<String, dynamic>;
       final containersRaw = results[2] as List<dynamic>;
-      final aiProviders  = results[3] as List<dynamic>;
+      final aiProviders = results[3] as List<dynamic>;
 
       final runningIds = containersRaw
           .where((c) => (c as Map)['status'] == 'running')
@@ -142,6 +142,7 @@ class _DashboardShellState extends State<DashboardShell> {
         newContainers.add(ContainerMetrics(
           id: id,
           name: cData['name']?.toString() ?? 'unknown',
+          project: cData['project']?.toString() ?? 'otros',
           image: cData['image']?.toString() ?? '',
           status: cData['status']?.toString() ?? 'unknown',
           state: cData['state']?.toString() ?? '',
@@ -165,12 +166,12 @@ class _DashboardShellState extends State<DashboardShell> {
 
       if (!mounted) return;
       setState(() {
-        _hostStats   = host;
-        _system      = system;
-        _containers  = newContainers;
+        _hostStats = host;
+        _system = system;
+        _containers = newContainers;
         _aiProviders = aiProviders;
-        _loading     = false;
-        _error       = null;
+        _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
@@ -180,7 +181,7 @@ class _DashboardShellState extends State<DashboardShell> {
       );
       setState(() {
         _loading = false;
-        _error   = e.toString();
+        _error = e.toString();
       });
     }
   }
@@ -222,9 +223,9 @@ class _DashboardShellState extends State<DashboardShell> {
           system: _system,
           events: _events,
           onRefresh: () => _load(),
+          api: _api,
+          onEvent: _addEvent,
         );
-      case DashboardMode.aiSystems:
-        return AiSystemsView(providers: _aiProviders);
       case DashboardMode.agents:
         return AgentsView(providers: _aiProviders);
       case DashboardMode.automations:

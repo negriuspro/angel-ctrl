@@ -5,7 +5,14 @@ import 'package:http/http.dart' as http;
 import 'config.dart';
 
 class ApiClient {
-  String get _base => Uri.base.origin;
+  // En Docker: Uri.base.origin (nginx mismo origen)
+  // En dev local: API_BASE = http://localhost:8080  (--dart-define)
+  static const String _apiBase = String.fromEnvironment(
+    'API_BASE',
+    defaultValue: '',
+  );
+
+  String get _base => _apiBase.isNotEmpty ? _apiBase : Uri.base.origin;
 
   final Map<String, String> _headers = {'X-API-Key': apiKey};
 
